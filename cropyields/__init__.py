@@ -5,7 +5,6 @@ import os
 ceda_parameters = {
     'ceda_usr': os.environ.get('CEDA_user'),
     'ceda_pwd': os.environ.get('CEDA_pwd'),
-    'download_dir': "D:\\Documents\\Data\\ClimateData\\nc_files\\Raw\\",
     'ftp_address': "ftp.ceda.ac.uk"
 }
 
@@ -17,9 +16,12 @@ db_parameters = {
 }
 
 # other paths:
-#   - OSGB_dir: where the rechunked Chess_Scape data is stored
-paths = {
-    'OSGB_dir': 'D:\\Documents\\Data\\ClimateData\\nc_files\\OsGrid\\'
+#   - OSGB_dir:   where the rechunked Chess_Scape data is stored
+#   - soilds_dir: where the soil data is stored.
+data_dirs = {
+    'ceda_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\Raw\\',
+    'OSGB_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\OsGrid\\',
+    'soils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\SoilData\\nc_files\\'
 }
 
 # DEM terrain_50 parameters

@@ -12,9 +12,9 @@ from pcse.util import reference_ET, check_angstromAB
 from pcse.exceptions import PCSEError
 from pcse.db import NASAPowerWeatherDataProvider
 from pcse.settings import settings
-from farmyields import paths
-from farmyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest
-from farmyields.db_manager import get_parcel_data
+from cropyields import data_dirs
+from cropyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest
+from cropyields.db_manager import get_parcel_data
 
 # Conversion functions
 NoConversion = lambda x: x
@@ -61,7 +61,7 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         os_digits_10k = ''.join(str(s) for s in os_digits_10k)
         self.osgrid_1km = osgrid_code[0:2].upper() + os_digits_1k
         self.osgrid_10km = osgrid_code[0:2].upper() + os_digits_10k
-        self.nc_fname = os.path.abspath(paths['OSGB_dir']+f'{self.osgrid_10km.upper()}_{rcp}_{ensemble:02d}.nc')
+        self.nc_fname = os.path.abspath(data_dirs['OSGB_dir']+f'{self.osgrid_10km.upper()}_{rcp}_{ensemble:02d}.nc')
         self.rcp, self.ensemble = rcp, ensemble
         self.missing_snow_depth = missing_snow_depth
         self.nodata_value = nodata_value

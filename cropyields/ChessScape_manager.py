@@ -1,4 +1,4 @@
-from farmyields import ceda_parameters
+from cropyields import ceda_parameters, data_dirs
 import ftplib
 import os
 from os import listdir
@@ -11,7 +11,7 @@ def download_ChessScape_data(rcps, vars, ensembles, bias_corrected):
     saved into a specified directory
     '''
 
-    ddir = ceda_parameters['download_dir']
+    ddir = data_dirs['ceda_dir']
     user = ceda_parameters['ceda_usr']
     pwd = ceda_parameters['ceda_pwd']
     ftp_addr = ceda_parameters['ftp_address']
@@ -66,7 +66,7 @@ def filter_files(rcp, years, vars, ensembles):
     specified ensemble and rcp. Years and vars can be one or more. In
     both cases, they must be passed as lists
     '''
-    path = ceda_parameters['download_dir']
+    path = data_dirs['ceda_dir']
     
     if not isinstance(years, list):
         years = [years]

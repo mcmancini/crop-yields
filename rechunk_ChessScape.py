@@ -24,9 +24,9 @@ https://catalogue.ceda.ac.uk/uuid/8194b416cbee482b89e0dfbe17c5786c
 '''
 import os
 import xarray as xr
-from nev import ceda_parameters, paths
-from nev.utils import osgrid2bbox, printProgressBar
-from nev.ChessScape_manager import filter_files
+from cropyields import ceda_parameters, paths
+from cropyields.utils import osgrid2bbox, printProgressBar
+from cropyields.ChessScape_manager import filter_files
 import time
 
 # OsRegions = ['SV', 'SW', 'SX', 'SY', 'SZ', 'TV',
