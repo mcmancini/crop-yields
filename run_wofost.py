@@ -34,7 +34,7 @@ sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KA
 parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
 
 # AGROMANAGEMENT
-agromanagement_file = os.path.join(data_dir, 'pcse_examples\\wwheat_oneyr.agro')
+agromanagement_file = os.path.join(data_dir, 'pcse_examples\\winter_wheat_oneyr.agro')
 agromanagement = YAMLAgroManagementReader(agromanagement_file)
 
 # WEATHER

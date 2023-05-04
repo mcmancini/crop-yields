@@ -78,15 +78,15 @@ for parcel in parcel_list:
     wheat_yields[parcel] = parcel_yield
     counter += 1
 
-os_1k = []
-os_10k = []
-for parcel in parcel_list:
-    os_digits = [int(s) for s in parcel if s.isdigit()]
-    os_digits_1k = os_digits[0:2] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+2)]
-    os_digits_10k = os_digits[0:1] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+1)]
-    os_digits_1k = ''.join(str(s) for s in os_digits_1k)
-    os_digits_10k = ''.join(str(s) for s in os_digits_10k)
-    os_1k.append(parcel[0:2].upper() + os_digits_1k)
-    os_10k.append(parcel[0:2].upper() + os_digits_10k)
+# os_1k = []
+# os_10k = []
+# for parcel in parcel_list:
+#     os_digits = [int(s) for s in parcel if s.isdigit()]
+#     os_digits_1k = os_digits[0:2] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+2)]
+#     os_digits_10k = os_digits[0:1] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+1)]
+#     os_digits_1k = ''.join(str(s) for s in os_digits_1k)
+#     os_digits_10k = ''.join(str(s) for s in os_digits_10k)
+#     os_1k.append(parcel[0:2].upper() + os_digits_1k)
+#     os_10k.append(parcel[0:2].upper() + os_digits_10k)
 
-os_10k = list(set(os_10k))
+# os_10k = list(set(os_10k))
