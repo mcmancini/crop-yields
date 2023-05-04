@@ -24,7 +24,7 @@ https://catalogue.ceda.ac.uk/uuid/8194b416cbee482b89e0dfbe17c5786c
 '''
 import os
 import xarray as xr
-from cropyields import ceda_parameters, paths
+from cropyields import data_dirs
 from cropyields.utils import osgrid2bbox, printProgressBar
 from cropyields.ChessScape_manager import filter_files
 import time
@@ -52,10 +52,13 @@ OsGrid = ["SX73", "SX78", "SX89", "SX60", "SX79", "SX51",
           "SX58", "SX55", "SX82", "SX76", "SX90", "SX68", 
           "SX92", "SX53", "SX86", "SX63", "SX62", "SX52", 
           "SX64", "SX49"]
+OsGrid2 = ['SX55', 'SX64', 'SX46', 'SX65', 'SX94', 'SX56', 'SX66', 'SX85', 'SX54', 'SX44', 'SX75', 'SX84', 'SX86', 'SX73', 'SX63', 'SX74', 'SX95', 'SX83', 'SX45', 'SX76']
+
+OsGrid = [elem for elem in OsGrid2 if elem not in OsGrid]
 
 # Paths for 1) downloaded chess-scape data; 2) rechunked chess-scape data
-nc_path = ceda_parameters['download_dir']
-out_path = paths['OSGB_dir']
+nc_path = data_dirs['ceda_dir']
+out_path = data_dirs['OSGB_dir']
 if not os.path.isdir(out_path):
     os.mkdir(out_path)
 

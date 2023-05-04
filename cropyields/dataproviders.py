@@ -13,8 +13,9 @@ from pcse.exceptions import PCSEError
 from pcse.db import NASAPowerWeatherDataProvider
 from pcse.settings import settings
 from cropyields import data_dirs
-from cropyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest
+from cropyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest, find_closest_point
 from cropyields.db_manager import get_parcel_data
+import logging
 
 # Conversion functions
 NoConversion = lambda x: x
@@ -36,10 +37,11 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
     :param force_update: bypass the cache file, reload data from the netcdf files and
            write a new cache file. Cache files are written under `$HOME/.pcse/meteo_cache`
 
-    The ExcelWeatherDataProvider assumes that records are complete and does
-    not make an effort to interpolate data as this can be easily
-    accomplished in Excel itself. Only SNOW_DEPTH is allowed to be missing
-    as this parameter is usually not provided outside the winter season.
+    The NetCDFWeatherDataProvider takes care of the adjustment of solar radiation to the 
+    length of the day (AAA: need to verify that the solar radiation data passed to
+    compute ETs is the data expected by the functions implemented in Wofost!!!) and 
+    deals with the fact that the length of a year in ChessScape is 360 days, which 
+    Wofost cannot handle. 
     """
     obs_conversions = {
         "TMAX": K_to_C,
@@ -70,7 +72,7 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
             msg = "Cannot find weather file at: %s" % self.nc_fname
             raise PCSEError(msg)
 
-        self.longitude, self.latitude = osgrid2lonlat(self.osgrid_1km, EPSG=27700)
+        self.longitude, self.latitude = osgrid2lonlat(self.osgrid_1km, EPSG=4326)
 
         # Retrieve altitude
         self.elevation = get_parcel_data(osgrid_code, ['elevation'])['elevation']
@@ -106,7 +108,7 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
                 # Loading cache file failed!
                 self._get_and_process_ChessScape()
         else:
-            # Cache file is too old. Try loading new data from NASA
+            # Cache file is too old. Try loading new data from ChessScape
             try:
                 msg = "Cache file older then 90 days, reloading from Chess-Scape nc files."
                 self.logger.debug(msg)
@@ -140,6 +142,20 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         os_array = xr.open_dataset(self.nc_fname)
 
         os_dataframe = os_array.sel(x=x, y=y, method="nearest").to_dataframe().reset_index()
+        # There is  a posibility that the assignment of weather data to parcels  near the coastline 
+        # could result in empty data (nan). This is because the .sel("closest") method in xarray is 
+        # based on the x-y coordinates, regardless of whether the arrays at those coordinates are 
+        # empty or not. Deal with this selecting the closest non-null cell. (Euclidean distance)
+        if os_dataframe.isnull().any().any():
+            os_array.sel(x=x, y=y, method="nearest").to_dataframe().reset_index()
+            os_dataframe = os_array.where((os_array.x >= x-5000) & 
+                                          (os_array.x < x+5000) &
+                                          (os_array.y >= y-5000) &
+                                          (os_array.y < y+5000), drop=True).to_dataframe().reset_index()
+            os_dataframe = os_dataframe.dropna()
+            unique_combinations = os_dataframe[['y', 'x']].drop_duplicates().to_dict(orient='records') 
+            closest = find_closest_point(unique_combinations, x, y)
+            os_dataframe = os_dataframe[(os_dataframe['x'] == closest['x']) & (os_dataframe['y'] == closest['y'])]
         # rh to vapour pressure in hPa
         vap = [rh_to_vpress(x, y) for x, y in zip(os_dataframe['hurs'], os_dataframe['tas'] - 273.15)]
         # remove unnecesary columns and rename the remaining ones
@@ -271,3 +287,9 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         else:
             return False
 
+# construct a class to deal with soil data from a variety of providers
+class SoilDataProvider(object):
+    """
+    Base class for all soil data providers.
+    """
+    pass

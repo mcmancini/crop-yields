@@ -3,6 +3,7 @@ from math import degrees as deg, radians as rad
 from datetime import date, datetime, time
 from pyproj import Transformer
 import re
+import math
 
 class BNGError(Exception):
     """Exception raised by bng.py module"""
@@ -242,14 +243,15 @@ def osgrid2lonlat(gridref, EPSG=None):
 
     if EPSG == None:
         return x, y
-    elif EPSG == 27700:
-        transformer = Transformer.from_crs(27700, 4326, always_xy=True)
-        x1, y1 = transformer.transform(x, y)
-        coords_reproj = (x1, y1)
-        x1, y1 = coords_reproj
-        return x1, y1
     else:
-        print('Optional EPSG argument can only take value of 27700')
+        try:
+            transformer = Transformer.from_crs(27700, EPSG, always_xy=True)
+            x1, y1 = transformer.transform(x, y)
+            coords_reproj = (x1, y1)
+            x1, y1 = coords_reproj
+            return x1, y1
+        except:
+            raise BNGError('Invalid EPSG code provided')
 
 class sun:  
     """  
@@ -467,3 +469,71 @@ def nearest(item, valuelist):
     Find nearest value to item in valuelist
     """
     return min(valuelist, key=lambda x: abs(x - item))
+
+# Given a list of points defined by x and y coordinates, find 
+# the closest one to a user defined point (this works for EPSG 27700 only)
+def find_closest_point(points, x, y):
+    """
+     Given a list of points defined by x and y coordinates, find 
+    the closest one to a user-defined location characterised by
+    coordinates 'x' and 'y'
+    :param points: a list of dictionaries [{'x':a, 'y':b},{'x':c, 'y':d}]
+    :param x: an EPSG:27700 longitude value
+    :param y: an EPSG:27700 latitude value
+    """
+    closest_point = None
+    closest_distance = float('inf')
+    for point in points:
+        distance = math.sqrt((point['x'] - x) ** 2 + (point['y'] - y) ** 2)
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_point = point
+    return closest_point
+
+# Generate water retention curve from van Genuchten model
+def water_retention(x, theta_r, theta_s, alpha, npar):
+    """
+    Function that generates a water retention curve for a  based on 
+    the van Genuchten model. This depends on a set of parameters
+    which are estimated based on soil characteristics.
+    Output in cm3/cm3
+    See https://shorturl.at/gBN34
+    An example of a model that estimates the water retention
+    parameters is the USDA Rosetta model
+    https://github.com/usda-ars-ussl/rosetta-soil
+    """
+    psi = 10.**x
+    m = 1-1/npar
+    num = theta_s - theta_r
+    denom = (1 + abs(alpha*psi)**npar)**m
+    vg = theta_r + num / denom
+    return vg
+
+# Generate Unsaturated water conductivity function from van Genuchten
+# and Mualem models
+def water_conductivity(x, theta_r, theta_s, alpha, npar, Ksat):
+    """
+    Unsaturated water conductivity function. Generated
+    from the parametric formulation of van Genuchten
+    in combination with the Mualem model.
+    See https://shorturl.at/gBN34
+    Output in cm/d
+    """
+    theta = water_retention(x, theta_r, theta_s, alpha, npar)
+    m = 1-1/npar
+    se = (theta - theta_r)/(theta_s - theta_r)
+    se_l = se**0.5 # parameter describing the pore structure of the material usually set to 0.5
+    se_m = se**(1/m)
+    se_fact = (1-se_m)**m
+    Krel = se_l * (1-se_fact)*(1-se_fact)
+    k_psi = Ksat * Krel
+    return k_psi
+
+
+
+
+
+
+
+
+

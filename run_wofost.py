@@ -12,7 +12,10 @@ from pcse.base import ParameterProvider
 from pcse.fileinput import YAMLAgroManagementReader
 from datetime import date
 from pcse.models import Wofost80_NWLP_FD_beta, Wofost71_WLP_FD
+from cropyields.SoilManager import SoilGridsDataProvider
 
+# LOCATION
+osgrid_code = 'SX5941249334'
 
 # YAML CROP PARAMETERS
 data_dir = 'D:\\Documents\\Data\\PCSE-WOFOST\\'
@@ -20,10 +23,10 @@ cropd = YAMLCropDataProvider(data_dir+'WOFOST_crop_parameters')
 # cropd.set_active_crop('wheat', 'Winter_wheat_101')
 cropd.set_active_crop('wheat', 'Winter_wheat_101')
 
-
 # SOIL PARAMETERS
-soilfile = os.path.join(data_dir, 'pcse_examples\\ec3.soil')
-soildata = CABOFileReader(soilfile)
+# soilfile = os.path.join(data_dir, 'pcse_examples\\ec3.soil')
+# soildata = CABOFileReader(soilfile)
+soildata = SoilGridsDataProvider(osgrid_code)
 
 # SITE PARAMETERS
 sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KAVAILI=20)
@@ -31,11 +34,10 @@ sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KA
 parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
 
 # AGROMANAGEMENT
-agromanagement_file = os.path.join(data_dir, 'pcse_examples\\winter_wheat_oneyr.agro')
+agromanagement_file = os.path.join(data_dir, 'pcse_examples\\wwheat_oneyr.agro')
 agromanagement = YAMLAgroManagementReader(agromanagement_file)
 
 # WEATHER
-osgrid_code = 'SX5941249334'
 rcp = 'rcp26'
 ensemble = 1
 wdp = NetCDFWeatherDataProvider(osgrid_code, rcp, ensemble, force_update=False)

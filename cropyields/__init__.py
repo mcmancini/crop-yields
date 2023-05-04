@@ -12,7 +12,7 @@ ceda_parameters = {
 db_parameters = {
     'db_user': os.environ.get('SQL_user'),
     'db_password': os.environ.get('SQL_pwd'),
-    'db_name': 'nev_db_v2'
+    'db_name': 'nev_db'
 }
 
 # other paths:

@@ -23,7 +23,7 @@ https://catalogue.ceda.ac.uk/uuid/8194b416cbee482b89e0dfbe17c5786c
   parameter
 '''
 
-from farmyields.ChessScape_manager import download_ChessScape_data
+from cropyields.ChessScape_manager import download_ChessScape_data
 
 # Define arguments for download
 rcps = ['rcp26', 'rcp45', 'rcp60', 'rcp85']

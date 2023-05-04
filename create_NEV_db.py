@@ -13,18 +13,8 @@ elevation, aspect and slope of each parcel
 '''
 from cropyields.db_manager import create_db, create_db_tables, drop_db, populate_table, get_dtm_values
 import geopandas as gpd
-import time
-import numpy as np
-import codecs
 import pandas as pd
 from cropyields.utils import lonlat2osgrid
-from pyproj import Transformer
-from soilgrids import SoilGrids
-from soilgrids import BmiSoilGrids
-import os
-from cropyields import data_dirs
-import xarray as xr
-import time
 
 # 1) Create new database and relations
 # ====================================
@@ -93,68 +83,3 @@ parcel_records = list(parcel_data.to_records(index=False))
 
 # add records in bulk to parcels table
 populate_table('parcels', parcel_records)
-
-# 2.3. soil
-# ---------
-# This comes from the SoilGrids dataset (https://www.isric.org/explore/soilgrids)
-# using the soilgrids 0.1.3 library (https://pypi.org/project/soilgrids/)
-# Docs at https://www.isric.org/explore/soilgrids/faq-soilgrids and
-# https://maps.isric.org/
-if not os.path.isdir(data_dirs['soils_dir']):
-    os.makedirs(data_dirs['soils_dir'])
-
-transformer = Transformer.from_crs(4326, 27700, always_xy=True)
-x1, y1 = transformer.transform(-2.547855,54.00366) #centroid of Great Britain
-west, east, south, north = x1 - 0.5e6, x1 + 0.5e6, y1 - 0.8e6, y1 + 0.8e6
-transformer = Transformer.from_crs(27700, 4326, always_xy=True)
-bl = transformer.transform(west, south)
-br = transformer.transform(east, south)
-tl = transformer.transform(west, north)
-tr = transformer.transform(east, north)
-
-soilvars = ['bdod', 'cec', 'cfvo', 'clay', 'nitrogen', 'phh2o', 'sand', 'silt', 'soc', 'ocd', 'ocs']
-soil_depths = ['0-5', '5-15', '15-30', '30-60', '60-100', '100-200']
-soil_grids = SoilGrids()
-counter = 1
-for var in soilvars:
-    print(f'Processing variable {counter} of {len(soilvars)}: \'{var}\'')
-    soil_chunk = xr.Dataset()
-    if var == 'ocs':
-        while True:
-            depth='0-30'
-            try:
-                soil_chunk[depth] = soil_grids.get_coverage_data(service_id=var, coverage_id=f'{var}_{depth}cm_mean',
-                                            west=bl[0], south=bl[1], east=br[0], north=tr[1],
-                                            width=4000, height=6400,
-                                            crs='urn:ogc:def:crs:EPSG::4326', output=(data_dirs['soils_dir']+'tmp.tif'))
-            except:
-                print("get_coverage_data failed. Retrying in 60 seconds...")
-                time.sleep(60)
-                continue
-            break
-    else:
-        for depth in soil_depths:
-            while True:
-                try:
-                    soil_chunk[depth] = soil_grids.get_coverage_data(service_id=var, coverage_id=f'{var}_{depth}cm_mean',
-                                                west=bl[0], south=bl[1], east=br[0], north=tr[1],
-                                                width=4000, height=6400,
-                                                crs='urn:ogc:def:crs:EPSG::4326', output=(data_dirs['soils_dir']+'tmp.tif'))
-                except:
-                    print("get_coverage_data failed. Retrying in 60 seconds...")
-                    time.sleep(60)
-                    continue
-                break
-    soil_chunk.to_netcdf(data_dirs['soils_dir'] + f'soil_{var}.nc')
-    counter += 1
-    time.sleep(60)
-
-# show metadata
-for key, value in soil_grids.metadata.items():
-    print('{}: {}'.format(key,value))
-
-# plot soil data
-import matplotlib.pyplot as plt
-soil_chunk['0-30'].plot(figsize=(9,5))
-plt.title('Mean pH between 0 and 5 cm soil depth in GB')
-plt.show()

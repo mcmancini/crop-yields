@@ -220,7 +220,9 @@ def populate_table(table_name, records):
 def get_dtm_values(parcel_OS_code):
     '''
     Query the DTM database based on longitude and latitude to add
-    elevation, slope and aspect data to the parcel data
+    elevation, slope and aspect data to the parcel data in the 
+    farm yield model. The output of this function is a dictionary
+    with the following keys: 'x', 'y', 'elevation', 'slope', 'aspect'
     '''
     db_name = dem_parameters['db_name']
     db_user = dem_parameters['db_user']
