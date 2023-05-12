@@ -148,10 +148,10 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         # empty or not. Deal with this selecting the closest non-null cell. (Euclidean distance)
         if os_dataframe.isnull().any().any():
             os_array.sel(x=x, y=y, method="nearest").to_dataframe().reset_index()
-            os_dataframe = os_array.where((os_array.x >= x-5000) & 
-                                          (os_array.x < x+5000) &
-                                          (os_array.y >= y-5000) &
-                                          (os_array.y < y+5000), drop=True).to_dataframe().reset_index()
+            os_dataframe = os_array.where((os_array.x >= x-10000) & 
+                                          (os_array.x < x+10000) &
+                                          (os_array.y >= y-10000) &
+                                          (os_array.y < y+10000), drop=True).to_dataframe().reset_index()
             os_dataframe = os_dataframe.dropna()
             unique_combinations = os_dataframe[['y', 'x']].drop_duplicates().to_dict(orient='records') 
             closest = find_closest_point(unique_combinations, x, y)
@@ -159,8 +159,10 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         # rh to vapour pressure in hPa
         vap = [rh_to_vpress(x, y) for x, y in zip(os_dataframe['hurs'], os_dataframe['tas'] - 273.15)]
         # remove unnecesary columns and rename the remaining ones
-        os_dataframe = os_dataframe[os_dataframe.columns.drop(['lat', 'lon', 'x', 'y', 'tas', 'rlds', 'rsds', 'hurs'])]
-        os_dataframe.columns = ['DAY', 'TMAX', 'TMIN', 'RAIN', 'WIND', 'IRRAD']
+        os_dataframe = os_dataframe[os_dataframe.columns.drop(['lat', 'lon', 'x', 'y', 'tas', 'rds', 'rlds', 'hurs'])]
+        # os_dataframe = os_dataframe[os_dataframe.columns.drop(['lat', 'lon', 'x', 'y', 'tas', 'rlds', 'rsds', 'hurs'])]
+        os_dataframe.columns = ['DAY', 'TMAX', 'TMIN', 'RAIN', 'IRRAD', 'WIND']
+        # os_dataframe.columns = ['DAY', 'TMAX', 'TMIN', 'RAIN', 'WIND', 'IRRAD']
         os_dataframe['SNOWDEPTH'] = -999
         os_dataframe['VAP'] = vap
 
@@ -183,7 +185,8 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
 
         # adjust irradiation for lenght of the day
         daylength = sun(lat=self.latitude, long=self.longitude)
-        os_dataframe['IRRAD'] = os_dataframe['IRRAD'] * [daylength.daylength(day)*3600 for day in os_dataframe.index]
+        # os_dataframe['IRRAD'] = os_dataframe['IRRAD'] * [daylength.daylength(day)*3600 for day in os_dataframe.index]
+        os_dataframe['IRRAD'] = os_dataframe['IRRAD'] * 3600*24
         self._read_observations(os_dataframe)
 
         # dump contents to a cache file

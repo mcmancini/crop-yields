@@ -40,10 +40,11 @@ agromanagement = YAMLAgroManagementReader(agromanagement_file)
 # WEATHER
 rcp = 'rcp26'
 ensemble = 1
-wdp = NetCDFWeatherDataProvider(osgrid_code, rcp, ensemble, force_update=False)
-# wdp_2 = NASAPowerWeatherDataProvider(latitude=50.309, longitude=-3.785)
+wdp = NetCDFWeatherDataProvider(osgrid_code, rcp, ensemble, force_update=True)
+wdp_2 = NASAPowerWeatherDataProvider(latitude=50.309, longitude=-3.785)
 day = date(2022, 8, 31)
 print(wdp(day))
+print(wdp_2(day))
 
 # df_1 = pd.DataFrame(wdp_1.export())
 # df_2 = pd.DataFrame(wdp_2.export())

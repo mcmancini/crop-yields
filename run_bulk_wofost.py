@@ -38,29 +38,38 @@ conn = psycopg2.connect(user=db_parameters['db_user'],
 conn.autocommit = True
 cur = conn.cursor()
 sql = '''
-    SELECT nat_grid_ref 
+    SELECT parcel_id, nat_grid_ref 
     FROM parcels;
     '''
 cur.execute(sql)
 t = cur.fetchall()
 parcel_list = [row[0] for row in t]
+parcel_os_code = [row[1] for row in t]
 if conn is not None:
     conn.close()
 
 # LOOP TO RUN WOFOST
 wheat_yields = {}
+failed_parcels = []
 counter = 1
 total = len(parcel_list)
-for parcel in parcel_list:
+for parcel in parcel_os_code:
     printProgressBar(counter, total)
     parcel_yield = {}
     soildata = SoilGridsDataProvider(parcel)
-    wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=False)
+    try:
+        wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=True)
+    except:
+        print(f'failed to retrieve weather data for parcel \'{parcel}\'')
+        failed_parcels.append(parcel)
+        continue
     parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
     wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
     try:
         wofsim.run_till_terminate()
     except:
+        print(f'failed to run the WOFOST crop yield model for parcel \'{parcel}\'')
+        failed_parcels.append(parcel)
         continue
     output = wofsim.get_output()
     varnames = ["TWSO"]
@@ -78,15 +87,11 @@ for parcel in parcel_list:
     wheat_yields[parcel] = parcel_yield
     counter += 1
 
-# os_1k = []
-# os_10k = []
-# for parcel in parcel_list:
-#     os_digits = [int(s) for s in parcel if s.isdigit()]
-#     os_digits_1k = os_digits[0:2] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+2)]
-#     os_digits_10k = os_digits[0:1] + os_digits[int(len(os_digits)/2):int(len(os_digits)/2+1)]
-#     os_digits_1k = ''.join(str(s) for s in os_digits_1k)
-#     os_digits_10k = ''.join(str(s) for s in os_digits_10k)
-#     os_1k.append(parcel[0:2].upper() + os_digits_1k)
-#     os_10k.append(parcel[0:2].upper() + os_digits_10k)
+df = pd.DataFrame(wheat_yields).T
+parcelset = df.index.to_list()
+# extract x values for subset of y values. Needed because of WOFOST failing for some of the parcels
+subset_x = [x for x, y in t if y in parcelset]
+df['parcel_id'] = subset_x
+df = df[['parcel_id', 'yield', 'harvest_date']]
 
-# os_10k = list(set(os_10k))
+df.to_csv(data_dir + 'south_hams_winterweath.csv')
