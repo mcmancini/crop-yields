@@ -93,5 +93,6 @@ parcelset = df.index.to_list()
 subset_x = [x for x, y in t if y in parcelset]
 df['parcel_id'] = subset_x
 df = df[['parcel_id', 'yield', 'harvest_date']]
+df.index.names = ['os_code']
 
 df.to_csv(data_dir + 'south_hams_winterweath.csv')
