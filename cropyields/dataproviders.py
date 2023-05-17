@@ -16,6 +16,7 @@ from cropyields import data_dirs
 from cropyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest, find_closest_point
 from cropyields.db_manager import get_parcel_data
 import logging
+from pcse.fileinput import YAMLAgroManagementReader
 
 # Conversion functions
 NoConversion = lambda x: x
@@ -296,3 +297,53 @@ class SoilDataProvider(object):
     Base class for all soil data providers.
     """
     pass
+
+def increase_year(data):
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, dict) or isinstance(value, list):
+                increase_year(value)
+            elif isinstance(value, dt.datetime):
+                # Modify the datetime object here
+                data[key] = value.replace(year=value.year + 1)
+    elif isinstance(data, list):
+        for item in data:
+            increase_year(item)
+
+class SingleRotationAgroManager(YAMLAgroManagementReader):
+    """
+    Class based on the YAMLAgromanagementReader that 
+    allows to easily alter agromanagement parameters without 
+    having to create a new YAML file
+    --------------------------------------------------------
+    Methods:
+    - change_year: Change calendar year of single rotation crop. It takes
+        the following parameters:
+        :param year_increment: how many years to sum to the base year. 
+               Base year can be retrieved using the retrieve_year property
+    """
+    def __init__(self, fname):
+        YAMLAgroManagementReader.__init__(self, fname)
+
+    @property
+    def retrieve_year(self):
+        calendar_years = [date.year for dictionary in self for date in dictionary.keys() if isinstance(date, dt.date)]
+        return calendar_years[0]
+    
+
+    def change_year(self, year_increment):
+        """
+        Change calendar year of single rotation crop.
+        """
+        modified_list = []
+        for item in self:
+            modified_item = {}
+            for key, value in item.items():
+                if isinstance(key, dt.date):
+                    new_date = key.replace(year=key.year + year_increment)
+                    modified_item[new_date] = value
+                else:
+                    modified_item[key] = value
+            modified_list.append(modified_item)
+        self.clear()
+        self.extend(modified_list)
