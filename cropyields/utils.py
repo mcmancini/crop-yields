@@ -530,6 +530,12 @@ def water_conductivity(x, theta_r, theta_s, alpha, npar, Ksat):
     return k_psi
 
 
+def stefan_boltzman(tmin, tmax):
+    """
+    Computes longwave energy emission from surface (Rnl)
+    """
+    pass
+
 
 
 

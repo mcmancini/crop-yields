@@ -48,12 +48,13 @@ if conn is not None:
     conn.close()
 
 # LOOP TO RUN WOFOST
-wheat_yields = {}
-failed_parcels = []
-counter = 1
-total = len(parcel_list)
+
 year_list = [2020,2025,2030,2035,2040,2045,2050]
 for year in year_list:
+    wheat_yields = {}
+    failed_parcels = []
+    counter = 1
+    total = len(parcel_list)
     agromanagement = SingleRotationAgroManager(agromanagement_file)
     agromanagement.change_year(year)
     for parcel in parcel_os_code:
