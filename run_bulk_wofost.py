@@ -14,19 +14,18 @@ from cropyields.utils import printProgressBar
 rcp = 'rcp26'
 ensemble = 1
 
-# YAML CROP PARAMETERS
-data_dir = 'D:\\Documents\\Data\\PCSE-WOFOST\\'
-cropd = SingleRotationAgroManager(data_dir+'WOFOST_crop_parameters')
-variety = 'Winter_wheat_106'
-cropd.set_active_crop('wheat', 'Winter_wheat_106')
-
-# AGROMANAGEMENT
+# PATHS
+data_dir            = 'D:\\Documents\\Data\\PCSE-WOFOST\\'
 agromanagement_file = os.path.join(data_dir, 'pcse_examples\\wwheat_oneyr.agro')
-agromanagement = SingleRotationAgroManager(agromanagement_file)
+crop_file           = data_dir+'WOFOST_crop_parameters'
+
+# CROP PARAMETERS
+cropd = YAMLCropDataProvider(crop_file)
+variety = 'Winter_wheat_101'
+cropd.set_active_crop('wheat', variety)
 
 # SITE PARAMETERS
 sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KAVAILI=20)
-
 
 # PARCEL LIST
 conn = None    
@@ -53,54 +52,58 @@ wheat_yields = {}
 failed_parcels = []
 counter = 1
 total = len(parcel_list)
-for parcel in parcel_os_code:
-    printProgressBar(counter, total)
-    parcel_yield = {}
-    soildata = SoilGridsDataProvider(parcel)
-    try:
-        wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=False)
-    except:
-        print(f'failed to retrieve weather data for parcel at \'{parcel}\'')
-        failed_parcels.append(parcel)
-        continue
-    parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
-    wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
-    try:
-        wofsim.run_till_terminate()
-    except:
-        print(f'failed to run the WOFOST crop yield model for parcel \'{parcel}\'')
-        failed_parcels.append(parcel)
-        continue
-    output = wofsim.get_output()
-    varnames = ["TWSO"]
-    tmp = {}
-    for var in varnames:
-        tmp[var] = [t[var] for t in output]
-    d = [len(tmp[x]) for x in varnames] 
+year_list = [2020,2025,2030,2035,2040,2045,2050]
+for year in year_list:
+    agromanagement = SingleRotationAgroManager(agromanagement_file)
+    agromanagement.change_year(year)
+    for parcel in parcel_os_code:
+        printProgressBar(counter, total)
+        parcel_yield = {}
+        soildata = SoilGridsDataProvider(parcel)
+        try:
+            wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=False)
+        except:
+            print(f'failed to retrieve weather data for parcel at \'{parcel}\'')
+            failed_parcels.append(parcel)
+            continue
+        parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
+        wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+        try:
+            wofsim.run_till_terminate()
+        except:
+            print(f'failed to run the WOFOST crop yield model for parcel \'{parcel}\'')
+            failed_parcels.append(parcel)
+            continue
+        output = wofsim.get_output()
+        varnames = ["TWSO"]
+        tmp = {}
+        for var in varnames:
+            tmp[var] = [t[var] for t in output]
+        d = [len(tmp[x]) for x in varnames] 
 
-    df = pd.DataFrame(output)
-    df.set_index('day', inplace=True, drop=True)
-    parcel_yield = {
-        "yield": df['TWSO'].max(),
-        "harvest_date": df['TWSO'].idxmax().strftime('%Y-%m-%d')
-    }
-    wheat_yields[parcel] = parcel_yield
-    counter += 1
+        df = pd.DataFrame(output)
+        df.set_index('day', inplace=True, drop=True)
+        parcel_yield = {
+            "yield": df['TWSO'].max(),
+            "harvest_date": df['TWSO'].idxmax().strftime('%Y-%m-%d')
+        }
+        wheat_yields[parcel] = parcel_yield
+        counter += 1
 
-df = pd.DataFrame(wheat_yields).T
-parcelset = df.index.to_list()
-# extract x values for subset of y values. Needed because of WOFOST failing for some of the parcels
-subset_x = [x for x, y in t if y in parcelset]
-df['parcel_id'] = subset_x
-df = df[['parcel_id', 'yield', 'harvest_date']]
-df.index.names = ['os_code']
+    df = pd.DataFrame(wheat_yields).T
+    parcelset = df.index.to_list()
+    # extract x values for subset of y values. Needed because of WOFOST failing for some of the parcels
+    subset_x = [x for x, y in t if y in parcelset]
+    df['parcel_id'] = subset_x
+    df = df[['parcel_id', 'yield', 'harvest_date']]
+    df.index.names = ['os_code']
 
-# Extract words and digits to create output file name
-char_list = variety.split('_')
-is_digits = [x.isdigit() for x in char_list]
-words = [word for word, is_digit in zip(char_list, is_digits) if not is_digit]
-digits = [word for word, is_digit in zip(char_list, is_digits) if is_digit]
-new_words = [word.capitalize() for word in words]
-var_name = ''.join(new_words) + '_' + digits[0]
+    # Extract words and digits to create output file name
+    char_list = variety.split('_')
+    is_digits = [x.isdigit() for x in char_list]
+    words = [word for word, is_digit in zip(char_list, is_digits) if not is_digit]
+    digits = [word for word, is_digit in zip(char_list, is_digits) if is_digit]
+    new_words = [word.capitalize() for word in words]
+    var_name = ''.join(new_words) + '_' + digits[0]
 
-df.to_csv(data_dir + 'SouthHams_' + var_name + '.csv')
+    df.to_csv(data_dir + 'SouthHams_' + var_name + '_' + year + '.csv')

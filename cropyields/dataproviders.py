@@ -331,10 +331,12 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
         return calendar_years[0]
     
 
-    def change_year(self, year_increment):
+    def change_year(self, new_year):
         """
         Change calendar year of single rotation crop.
         """
+        calendar_year = self.retrieve_year
+        year_increment = new_year - calendar_year
         modified_list = []
         for item in self:
             modified_item = {}
