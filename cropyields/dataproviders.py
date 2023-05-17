@@ -330,26 +330,6 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
         calendar_years = [date.year for dictionary in self for date in dictionary.keys() if isinstance(date, dt.date)]
         return calendar_years[0]
     
-
-    # def change_year(self, new_year):
-    #     """
-    #     Change calendar year of single rotation crop.
-    #     """
-    #     calendar_year = self.retrieve_year
-    #     year_increment = new_year - calendar_year
-    #     modified_list = []
-    #     for item in self:
-    #         modified_item = {}
-    #         for key, value in item.items():
-    #             if isinstance(key, dt.date):
-    #                 new_date = key.replace(year=key.year + year_increment)
-    #                 modified_item[new_date] = value
-    #             else:
-    #                 modified_item[key] = value
-    #         modified_list.append(modified_item)
-    #     self.clear()
-    #     self.extend(modified_list)
-    
     def change_year(self, new_year):
         """
         Change calendar year of single rotation crop.
@@ -374,15 +354,23 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
             modified_dict = {}
             for k, v in obj.items():
                 if isinstance(k, dt.date):
-                    new_date = k.replace(year=k.year + year_increment)
-                    modified_dict[new_date] = self._recursively_change_year(v, year_increment)
+                    new_key = k.replace(year=k.year + year_increment)
                 else:
-                    modified_dict[k] = self._recursively_change_year(v, year_increment)
+                    new_key = k
+
+                if isinstance(v, (dict, list)):
+                    modified_dict[new_key] = self._recursively_change_year(v, year_increment)
+                elif isinstance(v, dt.date):
+                    new_date = v.replace(year=v.year + year_increment)
+                    modified_dict[new_key] = new_date
+                else:
+                    modified_dict[new_key] = v
             return modified_dict
         elif isinstance(obj, list):
             modified_list = []
             for item in obj:
-                modified_list.append(self._recursively_change_year(item, year_increment))
+                modified_item = self._recursively_change_year(item, year_increment)
+                modified_list.append(modified_item)
             return modified_list
         else:
             return obj
