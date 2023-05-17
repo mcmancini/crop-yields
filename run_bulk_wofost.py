@@ -1,11 +1,10 @@
 from pcse.fileinput import YAMLCropDataProvider
 import os
-from pcse.fileinput import YAMLAgroManagementReader
 from pcse.util import WOFOST80SiteDataProvider
 from cropyields import db_parameters
 import psycopg2
 from cropyields.SoilManager import SoilGridsDataProvider
-from cropyields.dataproviders import NetCDFWeatherDataProvider
+from cropyields.dataproviders import NetCDFWeatherDataProvider, SingleRotationAgroManager
 from pcse.base import ParameterProvider
 from pcse.models import Wofost71_WLP_FD
 import pandas as pd
@@ -17,12 +16,13 @@ ensemble = 1
 
 # YAML CROP PARAMETERS
 data_dir = 'D:\\Documents\\Data\\PCSE-WOFOST\\'
-cropd = YAMLCropDataProvider(data_dir+'WOFOST_crop_parameters')
-cropd.set_active_crop('wheat', 'Winter_wheat_101')
+cropd = SingleRotationAgroManager(data_dir+'WOFOST_crop_parameters')
+variety = 'Winter_wheat_106'
+cropd.set_active_crop('wheat', 'Winter_wheat_106')
 
 # AGROMANAGEMENT
 agromanagement_file = os.path.join(data_dir, 'pcse_examples\\wwheat_oneyr.agro')
-agromanagement = YAMLAgroManagementReader(agromanagement_file)
+agromanagement = SingleRotationAgroManager(agromanagement_file)
 
 # SITE PARAMETERS
 sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KAVAILI=20)
@@ -58,9 +58,9 @@ for parcel in parcel_os_code:
     parcel_yield = {}
     soildata = SoilGridsDataProvider(parcel)
     try:
-        wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=True)
+        wdp = NetCDFWeatherDataProvider(parcel, rcp, ensemble, force_update=False)
     except:
-        print(f'failed to retrieve weather data for parcel \'{parcel}\'')
+        print(f'failed to retrieve weather data for parcel at \'{parcel}\'')
         failed_parcels.append(parcel)
         continue
     parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
@@ -95,4 +95,12 @@ df['parcel_id'] = subset_x
 df = df[['parcel_id', 'yield', 'harvest_date']]
 df.index.names = ['os_code']
 
-df.to_csv(data_dir + 'south_hams_winterweath.csv')
+# Extract words and digits to create output file name
+char_list = variety.split('_')
+is_digits = [x.isdigit() for x in char_list]
+words = [word for word, is_digit in zip(char_list, is_digits) if not is_digit]
+digits = [word for word, is_digit in zip(char_list, is_digits) if is_digit]
+new_words = [word.capitalize() for word in words]
+var_name = ''.join(new_words) + '_' + digits[0]
+
+df.to_csv(data_dir + 'SouthHams_' + var_name + '.csv')
