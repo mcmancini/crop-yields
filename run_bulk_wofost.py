@@ -107,4 +107,4 @@ for year in year_list:
     new_words = [word.capitalize() for word in words]
     var_name = ''.join(new_words) + '_' + digits[0]
 
-    df.to_csv(data_dir + 'SouthHams_' + var_name + '_' + year + '.csv')
+    df.to_csv(data_dir + 'SouthHams_' + var_name + '_' + str(year) + '.csv')
