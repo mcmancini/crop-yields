@@ -291,25 +291,6 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         else:
             return False
 
-# construct a class to deal with soil data from a variety of providers
-class SoilDataProvider(object):
-    """
-    Base class for all soil data providers.
-    """
-    pass
-
-def increase_year(data):
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, dict) or isinstance(value, list):
-                increase_year(value)
-            elif isinstance(value, dt.datetime):
-                # Modify the datetime object here
-                data[key] = value.replace(year=value.year + 1)
-    elif isinstance(data, list):
-        for item in data:
-            increase_year(item)
-
 class SingleRotationAgroManager(YAMLAgroManagementReader):
     """
     Class based on the YAMLAgromanagementReader that 
