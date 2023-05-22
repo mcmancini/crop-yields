@@ -74,7 +74,11 @@ class SoilDataProvider(dict):
         msg += "Data Source: %s\n" % self._DATA_SOURCE
         msg += "============================================\n\n"
         for key, value in self.items():
-            msg += ("%s: %s %s\n" % (key, value, type(value)))
+            if isinstance(value, list):
+                rounded_list = [round(x, 2) for x in value[0:20]]  # only print first 20 elements of list
+                msg += "%s: %s %s\n" % (key, rounded_list, type(value))
+            else:
+                msg += "%s: %s %s\n" % (key, value, type(value))
         return msg
 
 
