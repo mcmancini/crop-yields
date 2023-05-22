@@ -1,4 +1,4 @@
-from cropyields import db_parameters, dem_parameters
+from cropyields import db_parameters, dem_parameters, whsd_parameters
 import psycopg2
 import numpy as np
 from psycopg2.extensions import register_adapter, AsIs
@@ -270,8 +270,11 @@ def get_parcel_data(parcel_OS_code, col_list):
     '''
     Retrieve from the NEV SQL database data associated with
     a user-defined parcel. 
-    Input arguments are the ID of the parcel of interest (OS code)
-    and a list containing the names of the columns to retrieve
+
+    INPUT ARGUMENTS     
+    :param parcel_OS_code: the OS Grid Code of the parcel for which
+           data is required.
+    :param col_list: list of column names to query (i.e., the data needed)
     '''
     db_name = db_parameters['db_name']
     db_user = db_parameters['db_user']
@@ -297,6 +300,52 @@ def get_parcel_data(parcel_OS_code, col_list):
         cols = [x for x in col_list]
         dict_keys = ['parcel_ID', 'nat_grid_ref'] + cols
         parcel_dict = {key:val for (key, val) in zip(dict_keys, t)}
+        return parcel_dict
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+# Get WHSD data from database for any parcel
+def get_whsd_data(parcel_OS_code, vars):
+    '''
+    Retrieve from the SEER NEV database soil data on the 2km SEER grid
+    from the World Harmonized Soil Database
+
+    INPUT ARGUMENTS     
+    :param parcel_OS_code: the OS Grid Code of the parcel for which
+           data is required.
+    :param vars: list of variables to query (i.e., the data needed)
+           Default variables required are % Sand, % silt and % clay
+    '''
+    db_name = whsd_parameters['db_name']
+    db_user = whsd_parameters['db_user']
+    db_password = whsd_parameters['db_password']
+    db_schema = whsd_parameters['schema']
+    conn = None    
+    try:
+        conn = psycopg2.connect(user=db_user,
+                                password=db_password, 
+                                database=db_name, 
+                                host='127.0.0.1', 
+                                port= '5432')
+        conn.autocommit = True
+        cur = conn.cursor()
+        seer_soilvars = ['adj' + x for x in vars]
+        to_get = str(seer_soilvars).replace('[\'', '').replace('\']', '')
+        x, y = osgrid2lonlat(parcel_OS_code)
+        sql = '''
+            SELECT {to_get}
+            FROM {db_schema}.seer_soil
+            JOIN {db_schema}.seer_regions ON seer_soil.new2kid = seer_regions.new2kid
+            ORDER BY SQRT(POWER(seer_regions.xmn + 1000 - {x}, 2) + POWER(seer_regions.ymn + 1000 - {y}, 2))
+            LIMIT 1;
+            '''.format(to_get=to_get.replace("'", ""), db_schema=db_schema, x=x, y=y)
+        cur.execute(sql)
+        t = cur.fetchall()[0]
+        t = [int(x) for x in t]
+        parcel_dict = {key:val for (key, val) in zip(vars, t)}
         return parcel_dict
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
