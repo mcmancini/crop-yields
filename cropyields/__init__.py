@@ -21,7 +21,8 @@ db_parameters = {
 data_dirs = {
     'ceda_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\Raw\\',
     'OSGB_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\OsGrid\\',
-    'soils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\SoilData\\nc_files\\'
+    'soils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\SoilData\\nc_files\\',
+    'utils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\Utils\\'
 }
 
 # DEM terrain_50 parameters

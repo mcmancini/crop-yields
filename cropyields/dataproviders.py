@@ -79,9 +79,8 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         self.elevation = get_parcel_data(osgrid_code, ['elevation'])['elevation']
 
         # Retrieve Angstrom coefficients A and B
-        w = NASAPowerWeatherDataProvider(self.longitude, self.latitude)
-        angstA, angstB = w.angstA, w.angstB
-        self.angstA, self.angstB = check_angstromAB(angstA, angstB)
+        w = pd.read_csv(data_dirs['utils_dir'] + 'angst_coefficients.csv').set_index('parcel')
+        self.angstA, self.angstB = w.loc[osgrid_code]['angstA'], w.loc[osgrid_code]['angstB']
         self.has_sunshine = False # data has radiation values, not sunshine hours
 
         # Check for existence of a cache file
