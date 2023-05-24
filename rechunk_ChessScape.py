@@ -28,6 +28,7 @@ from cropyields import data_dirs
 from cropyields.utils import osgrid2bbox, printProgressBar
 from cropyields.ChessScape_manager import filter_files
 import time
+import multiprocessing
 
 # OsRegions = ['SV', 'SW', 'SX', 'SY', 'SZ', 'TV',
 #              'SR', 'SS', 'ST', 'SU', 'TQ', 'TR',
@@ -44,33 +45,18 @@ import time
 # OsCells = [f'{number:02d}'for number in range(100)]
 # OsGrid = [x + num for num in OsCells for x in OsRegions]
 
-OsGrid = ["SX73", "SX78", "SX89", "SX60", "SX79", "SX51", 
-          "SX77", "SX75", "SX56", "SX83", "SX61", "SX70", 
-          "SX54", "SX72", "SX87", "SX67", "SX65", "SX71", 
-          "SX69", "SX81", "SX50", "SX85", "SX57", "SX84", 
-          "SX66", "SX59", "SX88", "SX80", "SX91", "SX74", 
-          "SX58", "SX55", "SX82", "SX76", "SX90", "SX68", 
-          "SX92", "SX53", "SX86", "SX63", "SX62", "SX52", 
-          "SX64", "SX49"]
-OsGrid2 = ['SX55', 'SX64', 'SX46', 'SX65', 'SX94', 'SX56', 'SX66', 'SX85', 'SX54', 'SX44', 'SX75', 'SX84', 'SX86', 'SX73', 'SX63', 'SX74', 'SX95', 'SX83', 'SX45', 'SX76']
+def rechunk_ChessScape(OsCell):
+    nc_path = data_dirs['ceda_dir']
+    out_path = data_dirs['OSGB_dir']
+    if not os.path.isdir(out_path):
+        os.mkdir(out_path)
 
-OsGrid = [elem for elem in OsGrid2 if elem not in OsGrid]
-
-# Paths for 1) downloaded chess-scape data; 2) rechunked chess-scape data
-nc_path = data_dirs['ceda_dir']
-out_path = data_dirs['OSGB_dir']
-if not os.path.isdir(out_path):
-    os.mkdir(out_path)
-
-# nc data parameters
-rcp = 'rcp26'
-years = [x for x in range(2020, 2081)]
-vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind']
-# vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind', 'psurf']
-ensemble = '01'
-
-# rechunking routine
-for OsCell in OsGrid:
+    # nc data parameters
+    rcp = 'rcp85'
+    years = [x for x in range(2020, 2081)]
+    vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind']
+    # vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind', 'psurf']
+    ensemble = '01'
     t = time.time()
     bbox = osgrid2bbox(OsCell, '10km')
     # initialise empty xr dataset
@@ -113,3 +99,28 @@ for OsCell in OsGrid:
     tot_time = time.time() - t
     print(f'OS cell \'{OsCell}\' processed in {tot_time:.2f} seconds\n')
     os_chunk.to_netcdf(out_path+f'{OsCell}_{rcp}_{ensemble}.nc')
+
+
+if __name__ == "__main__":
+
+    OsGrid = ["SX73", "SX78", "SX89", "SX60", "SX79", "SX51", 
+            "SX77", "SX75", "SX56", "SX83", "SX61", "SX70", 
+            "SX54", "SX72", "SX87", "SX67", "SX65", "SX71", 
+            "SX69", "SX81", "SX50", "SX85", "SX57", "SX84", 
+            "SX66", "SX59", "SX88", "SX80", "SX91", "SX74", 
+            "SX58", "SX55", "SX82", "SX76", "SX90", "SX68", 
+            "SX92", "SX53", "SX86", "SX63", "SX62", "SX52", 
+            "SX64", "SX49", "SX46", "SX94", "SX44", "SX95", 
+            "SX45"]
+    
+    pool = multiprocessing.Pool(processes=16)
+
+    # Use the pool.map() function to parallelize the loop
+    results = pool.map(rechunk_ChessScape, OsGrid)
+
+    # Close the pool to indicate that no more tasks will be submitted
+    pool.close()
+
+    # Wait for all processes to complete
+    pool.join()
+    
