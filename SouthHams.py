@@ -81,12 +81,12 @@ plt.savefig(f'{datapath}Figures\\yield_by_soil.png', dpi=300)
 plt.show()
 
 
-## (3) Variety
-## ===========
+## (3) Varieties
+## =============
 rcp          = 'rcp26'
 year         = 2020
 soil         = 'SoilGrids'
-variety_list = ['101', '106']
+variety_list = ['101', '103', '104', '105', '106', '107']
 
 
 data_dict = dict()
