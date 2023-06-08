@@ -62,6 +62,8 @@ for rcp in ['rcp26']:
             total = len(parcel_list)
             agromanagement = SingleRotationAgroManager(agromanagement_file)
             agromanagement.change_year(year)
+            if agromanagement.retrieve_variety != variety:
+                agromanagement.change_variety(variety)
             for parcel in parcel_os_code:
                 printProgressBar(counter, total)
                 parcel_yield = {}

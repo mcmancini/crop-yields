@@ -299,8 +299,12 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
     Methods:
     - change_year: Change calendar year of single rotation crop. It takes
         the following parameters:
-        :param year_increment: how many years to sum to the base year. 
+        :param new_year: how many years to sum to the base year. 
                Base year can be retrieved using the retrieve_year property
+    - change_variety: Change calendar year of single rotation crop. It takes
+        the following parameters:
+        :param new_variety: new variety to replace the base one
+               Base variety can be retrieved using the retrieve_variety property
     """
     def __init__(self, fname):
         YAMLAgroManagementReader.__init__(self, fname)
@@ -309,6 +313,13 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
     def retrieve_year(self):
         calendar_years = [date.year for dictionary in self for date in dictionary.keys() if isinstance(date, dt.date)]
         return calendar_years[0]
+    
+    @property
+    def retrieve_variety(self):
+        variety_names = [item[date_key]['CropCalendar']['variety_name'] if item[date_key]['CropCalendar'] else None for item in self for date_key in item]
+        variety_names = [item for item in variety_names if item is not None]
+        return variety_names[0]
+
     
     def change_year(self, new_year):
         """
@@ -354,3 +365,14 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
             return modified_list
         else:
             return obj
+        
+    def change_variety(self, new_variety):
+        """
+        Change variety for the crop to be run in a single rotation
+        """
+        for item in self:
+            for date_key in item:
+                if 'CropCalendar' in item[date_key] and item[date_key]['CropCalendar'] is not None:
+                    item[date_key]['CropCalendar']['variety_name'] = new_variety
+
+        
