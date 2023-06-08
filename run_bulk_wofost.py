@@ -13,7 +13,9 @@ from cropyields.utils import printProgressBar
 # INPUT PARAMETERS
 rcp_list = ['rcp26']
 year_list = [2020]
-variety_list = ['Winter_wheat_103', 'Winter_wheat_104', 'Winter_wheat_105','Winter_wheat_107']
+variety_list = ['Winter_wheat_101', 'Winter_wheat_102', 'Winter_wheat_103', 
+                'Winter_wheat_104', 'Winter_wheat_105', 'Winter_wheat_106',
+                'Winter_wheat_107']
 
 
 for rcp in ['rcp26']:
