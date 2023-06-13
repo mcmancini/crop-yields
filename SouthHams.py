@@ -128,8 +128,6 @@ quantile_data = {}
 for year, df in data_dict.items():
     quantiles_year = df['yield'].quantile(quantiles)
     quantile_data[year] = quantiles_year
-
-# Convert the quantile_data dictionary into a DataFrame
 quantile_df = pd.DataFrame(quantile_data)
 
 # Plot the line graph
@@ -140,7 +138,7 @@ ax.plot(quantile_df.columns, quantile_df.loc[0.5], color='navy', label='Median')
 
 # Shade areas between quantiles
 qtls = [0.01, 0.05, 0.25, 0.75, 0.95, 0.99]
-colors = ['mistyrose', 'lightcoral', 'red', 'lightcoral', 'mistyrose'] 
+# colors = ['mistyrose', 'lightcoral', 'red', 'lightcoral', 'mistyrose'] 
 colors = ['lightskyblue', 'dodgerblue', 'blue', 'dodgerblue', 'lightskyblue']
 for i in range(len(qtls)-1):
     lower_quantile = qtls[i]
