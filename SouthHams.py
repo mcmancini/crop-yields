@@ -86,7 +86,7 @@ plt.show()
 rcp          = 'rcp26'
 year         = 2020
 soil         = 'SoilGrids'
-variety_list = ['101', '103', '104', '105', '106', '107']
+variety_list = ['101', '102', '103', '104', '105', '106', '107']
 
 
 data_dict = dict()
@@ -106,4 +106,63 @@ plt.xlabel('Wheat variety')
 plt.ylabel('Yield [kg dm]')
 plt.title('Yields by variety - South Hams 2020')
 plt.savefig(f'{datapath}Figures\\yield_by_variety.png', dpi=300)
+plt.show()
+
+## (4) Time series
+## ===============
+rcp  =  'rcp26'
+year_list =  [year for year in range(2020, 2051)]
+variety   = '101' # can be 101 to 106 depending on what has been run
+soil      = 'SoilGrids' # can be SoilGrids or WHSD
+
+data_dict = dict()
+for year in year_list:
+    filename = f'{datapath}SouthHams_{rcp}_WinterWheat_{variety}_{year}_{soil}_dry.csv'
+    df = pd.read_csv(filename)
+    key = year
+    data_dict[key] = df
+
+quantiles = [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
+quantile_data = {}
+
+for year, df in data_dict.items():
+    quantiles_year = df['yield'].quantile(quantiles)
+    quantile_data[year] = quantiles_year
+
+# Convert the quantile_data dictionary into a DataFrame
+quantile_df = pd.DataFrame(quantile_data)
+
+# Plot the line graph
+fig, ax = plt.subplots()
+
+# Plot median line in dark red
+ax.plot(quantile_df.columns, quantile_df.loc[0.5], color='navy', label='Median')
+
+# Shade areas between quantiles
+qtls = [0.01, 0.05, 0.25, 0.75, 0.95, 0.99]
+colors = ['mistyrose', 'lightcoral', 'red', 'lightcoral', 'mistyrose'] 
+colors = ['lightskyblue', 'dodgerblue', 'blue', 'dodgerblue', 'lightskyblue']
+for i in range(len(qtls)-1):
+    lower_quantile = qtls[i]
+    upper_quantile = qtls[i+1]
+    ax.fill_between(
+        quantile_df.columns,
+        quantile_df.loc[lower_quantile],
+        quantile_df.loc[upper_quantile],
+        color=colors[i],
+        alpha=0.7
+    )
+
+# Set labels and title
+ax.set_xlabel('Year')
+ax.set_ylabel('Yield')
+ax.set_title('Time series of yields -- Winter wheat')
+
+# Legend
+legend_elements = [plt.Line2D([0], [0], color='navy', lw=2, label='Median')]
+legend_elements.extend([plt.Rectangle((0, 0), 1, 1, color=color) for color in colors])
+labels = ['Median', '1-5%', '5-25%', '25-75%', '75-95%', '95-99%']
+ax.legend(legend_elements, labels)
+
+plt.savefig(f'{datapath}Figures\\yield_timeseries.png', dpi=150)
 plt.show()
