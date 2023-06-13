@@ -12,10 +12,11 @@ from cropyields.utils import printProgressBar
 
 # INPUT PARAMETERS
 rcp_list = ['rcp26']
-year_list = [2020]
-variety_list = ['Winter_wheat_101', 'Winter_wheat_102', 'Winter_wheat_103', 
-                'Winter_wheat_104', 'Winter_wheat_105', 'Winter_wheat_106',
-                'Winter_wheat_107']
+year_list = [year for year in range(2020, 2051)]
+# variety_list = ['Winter_wheat_101', 'Winter_wheat_102', 'Winter_wheat_103', 
+#                 'Winter_wheat_104', 'Winter_wheat_105', 'Winter_wheat_106',
+#                 'Winter_wheat_107']
+variety_list = ['Winter_wheat_101']
 
 
 for rcp in ['rcp26']:
@@ -25,7 +26,7 @@ for rcp in ['rcp26']:
     # PATHS
     data_dir            = 'D:\\Documents\\Data\\PCSE-WOFOST\\'
     output_dir          = 'D:\\Documents\\Data\\PCSE-WOFOST\\WOFOST_output\\'
-    agromanagement_file = os.path.join(data_dir, 'pcse_examples\\wwheat_oneyr.agro')
+    agromanagement_file = os.path.join(data_dir, 'pcse_examples\\winter_wheat_oneyr.agro')
     crop_file           = data_dir+'WOFOST_crop_parameters'
 
     # CROP PARAMETERS
@@ -119,4 +120,4 @@ for rcp in ['rcp26']:
             new_words = [word.capitalize() for word in words]
             var_name = ''.join(new_words) + '_' + digits[0]
 
-            df.to_csv(output_dir + 'SouthHams_' + rcp + '_' + var_name + '_' + str(year) + '_' + soilsource + '.csv')
+            df.to_csv(output_dir + 'SouthHams_' + rcp + '_' + var_name + '_' + str(year) + '_' + soilsource + '_dry.csv')
