@@ -11,7 +11,7 @@ import pandas as pd
 from cropyields.utils import printProgressBar
 
 # INPUT PARAMETERS
-rcp_list = ['rcp26']
+rcp_list = ['rcp85']
 year_list = [year for year in range(2020, 2051)]
 # variety_list = ['Winter_wheat_101', 'Winter_wheat_102', 'Winter_wheat_103', 
 #                 'Winter_wheat_104', 'Winter_wheat_105', 'Winter_wheat_106',
@@ -19,7 +19,7 @@ year_list = [year for year in range(2020, 2051)]
 variety_list = ['Winter_wheat_101']
 
 
-for rcp in ['rcp26']:
+for rcp in rcp_list:
     ensemble = 1
     soilsource = 'SoilGrids'
 
