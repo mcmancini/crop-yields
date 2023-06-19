@@ -4,7 +4,8 @@ from pcse.util import WOFOST80SiteDataProvider
 from cropyields import db_parameters
 import psycopg2
 from cropyields.SoilManager import SoilGridsDataProvider, WHSDDataProvider
-from cropyields.dataproviders import NetCDFWeatherDataProvider, SingleRotationAgroManager
+from cropyields.WeatherManager import NetCDFWeatherDataProvider
+from cropyields.CropManager import SingleRotationAgroManager
 from pcse.base import ParameterProvider
 from pcse.models import Wofost71_WLP_FD
 import pandas as pd

@@ -1,4 +1,4 @@
-from cropyields.dataproviders import NetCDFWeatherDataProvider
+from cropyields.WeatherManager import NetCDFWeatherDataProvider
 from pcse.db import NASAPowerWeatherDataProvider
 from datetime import date
 import pandas as pd
