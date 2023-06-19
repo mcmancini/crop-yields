@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import contextily as ctx
 from cropyields.db_manager import find_farm, get_farm_data
 
 class Farm:
@@ -28,8 +29,14 @@ class Farm:
         """
         Basic plotting functionality for class Farm
         """
-        df = self.parcel_data
-        df.plot()
+        df = self.parcel_data.to_crs("EPSG:3857")
+        ax = df.plot(edgecolor="red",
+                     facecolor="none",  
+                     linewidth=2,
+                     figsize=(10, 10))
+        # Add OpenStreetMap basemap
+        ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
+        plt.title(f"Farm {self.farm_id}")
         plt.show()
 
     
