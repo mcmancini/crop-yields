@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from cropyields.db_manager import find_farm, get_farm_data
 
 class Farm:
@@ -21,8 +22,12 @@ class Farm:
 
     def __init__(self, identifier):
         self.farm_id = self._get_farm_id(identifier)
-        self.farm_area, self.num_parcels, self.parcel_ids, self.parcel_data = self._get_farm_data(identifier)
-        self.lon, self.lat = self._get_farm_location(identifier)
+        self.farm_area, self.num_parcels, self.parcel_ids, self.parcel_data, self.lon, self.lat = self._get_farm_data(identifier)
+
+    def plot(self):
+        df = self.parcel_data
+        df.plot()
+        plt.show()
 
     
     @staticmethod
@@ -49,25 +54,18 @@ class Farm:
         tot_area = farm.geometry.area.sum() / 1e4 #area in hectares
         tot_parcels = len(farm)
         parcel_ids = farm['nat_grid_ref']
-        return tot_area, tot_parcels, parcel_ids, farm
+        centroids = farm.centroid.to_crs('EPSG:4326')
+        farm = farm.to_crs('EPSG:4326')
+        x = centroids.x.mean()
+        y = centroids.y.mean()
+        return tot_area, tot_parcels, parcel_ids, farm, x, y
     
-
-    @staticmethod
-    def _get_farm_location(identifier):
-        farm = get_farm_data(identifier)
-        farm = farm.set_crs('EPSG:4326')
-        farm = farm.to_crs('EPSG:27700')
-        farm['centroid'] = farm.centroid.to_crs('EPSG:4326')
-        x = farm['centroid'].x.mean()
-        y = farm['centroid'].y.mean()
-        return(x, y)      
-
     
     def __str__(self):
         msg = "============================================\n"
         msg +=  "Farm characteristics for farm with ID %s \n" % str(self.farm_id)
         msg += "----------------Description-----------------\n"
-        msg += "Lon: %.3f; Lat: %.3f\n" % (self.lon, self.lat)
+        msg += "Lat: %.3f; Lon: %.3f\n" % (self.lat, self.lon)
         msg += "Total farm area: %.1f hectares \n" % self.farm_area 
         msg += "%d parcels \n" %self.num_parcels
         msg += "============================================\n\n"
