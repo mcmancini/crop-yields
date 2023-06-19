@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import contextily as ctx
+import folium
 from cropyields.db_manager import find_farm, get_farm_data
+import geopandas as gpd
 
 class Farm:
     """
@@ -32,14 +34,39 @@ class Farm:
         df = self.parcel_data.to_crs("EPSG:3857")
         ax = df.plot(edgecolor="red",
                      facecolor="none",  
-                     linewidth=2,
-                     figsize=(10, 10))
+                     linewidth=2)
         # Add OpenStreetMap basemap
         ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
         plt.title(f"Farm {self.farm_id}")
         plt.show()
 
-    
+    def save_plot(self, filename):
+        """
+        Save html file containing interactive map with an overlay of the farm.
+        Output file extension is .html
+        """
+        df = self.parcel_data
+        m = folium.Map(location=[self.lat, self.lon])
+        for _, r in df.iterrows():
+            # Without simplifying the representation of each borough,
+            # the map might not be displayed
+            sim_geo = gpd.GeoSeries(r["geometry"])
+            geo_j = sim_geo.to_json()
+            geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {"fillColor": "orange"})
+            folium.Popup(r["nat_grid_ref"]).add_to(geo_j)
+            geo_j.add_to(m)
+        savefile = self._check_html_extension(filename)
+        m.save(savefile)
+
+
+    @staticmethod
+    def _check_html_extension(filename):
+        if not filename.endswith(".html"):
+            raise ValueError("Invalid file extension. File must have the '.html' extension.")
+        else:
+            return filename
+
+
     @staticmethod
     def _get_farm_id(identifier):
         """
