@@ -21,7 +21,10 @@ parcel_os_code = [row[1] for row in t]
 if conn is not None:
     conn.close()
 
-a = Farm(parcel_os_code[1])
+OSCode = parcel_os_code[3]
+a = Farm(OSCode)
 print(a)
+save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
+a.save_plot(f"{save_folder}\\{a.farm_id}.html")
 a.plot()
 
