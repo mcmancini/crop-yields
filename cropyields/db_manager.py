@@ -437,7 +437,11 @@ def get_farm_data(identifier):
     try:
         database_url = f"postgresql://{db_parameters['db_user']}:{db_parameters['db_password']}@localhost/{db_parameters['db_name']}"
         engine = create_engine(database_url)
-        sql = f"SELECT parcel_id, farm_id, nat_grid_ref, ST_AsText(geometry) as geometry FROM parcels;"
+        sql = """
+            SELECT parcel_id, farm_id, nat_grid_ref, ST_AsText(geometry) as geometry 
+            FROM parcels 
+            WHERE farm_id = {farm};
+        """.format(farm=farm)
         df = pd.read_sql(sql, engine)
     
         # Convert the WKT representation to a geospatial object
