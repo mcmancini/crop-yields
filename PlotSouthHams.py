@@ -162,5 +162,5 @@ legend_elements.extend([plt.Rectangle((0, 0), 1, 1, color=color) for color in co
 labels = ['Median', '1-5%', '5-25%', '25-75%', '75-95%', '95-99%']
 ax.legend(legend_elements, labels)
 
-plt.savefig(f'{datapath}Figures\\yield_timeseries.png', dpi=150)
+plt.savefig(f'{datapath}Figures\\yield_timeseries_{rcp}.png', dpi=300)
 plt.show()
