@@ -25,6 +25,9 @@ class Farm:
         self.farm_area, self.num_parcels, self.parcel_ids, self.parcel_data, self.lon, self.lat = self._get_farm_data(identifier)
 
     def plot(self):
+        """
+        Basic plotting functionality for class Farm
+        """
         df = self.parcel_data
         df.plot()
         plt.show()
