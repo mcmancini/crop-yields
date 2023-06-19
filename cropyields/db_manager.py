@@ -6,6 +6,10 @@ psycopg2.extensions.register_adapter(np.int64, AsIs)
 psycopg2.extensions.register_adapter(np.int32, AsIs)
 psycopg2.extensions.register_adapter(np.float32, AsIs)
 from cropyields.utils import osgrid2lonlat, nearest
+from sqlalchemy import create_engine
+from shapely.geometry import Point
+import pandas as pd
+import geopandas as gpd
 
 # Create a database
 def create_db():
@@ -16,37 +20,55 @@ def create_db():
     db_password = db_parameters['db_password']
 
     try:
-        # establishing the connection
+        # Establish a connection to the PostgreSQL server without specifying the database
         conn = psycopg2.connect(user=db_user,
                                 password=db_password, 
                                 host='127.0.0.1', 
-                                port= '5432')
+                                port='5432')
         conn.autocommit = True
-        
-        # check if postgis extension exists
-        ext_check = 'SELECT * FROM pg_extension WHERE extname=\'postgis\';'
 
-        # Create a cursor
+        # Create a cursor to execute SQL statements
         cur = conn.cursor()
-        # Execute sql statement
-        cur.execute(ext_check)      
-        if cur.fetchall() is None:
-            sql = (f'CREATE DATABASE {db_name};',
-                    'CREATE EXTENSION postgis;')
-            for command in sql:
-                cur.execute(command)
-        else:
-            sql = (f'CREATE DATABASE {db_name};')
-            cur.execute(sql)     
-        
-        # close communication with the PostgreSQL database server
+
+        # Check if the target database exists
+        cur.execute(f"SELECT datname FROM pg_catalog.pg_database WHERE datname = '{db_name}';")
+        exists = cur.fetchone()
+
+        if not exists:
+            # Create the target database
+            cur.execute(f'CREATE DATABASE {db_name};')
+            print(f'Database \'{db_name}\' created successfully!')
+
+        # Close the cursor and the connection to the PostgreSQL server
         cur.close()
-        print(f'Database \'{db_name}\' created successfully!')    
+        conn.close()
+
+        # Connect to the target database
+        conn = psycopg2.connect(database=db_name,
+                                user=db_user,
+                                password=db_password,
+                                host='127.0.0.1',
+                                port='5432')
+        conn.autocommit = True
+
+        # Create a cursor to execute SQL statements in the target database
+        cur = conn.cursor()
+
+        # Check if the postGIS extension exists in the target database
+        cur.execute('SELECT * FROM pg_extension WHERE extname=\'postgis\';')
+        exists = cur.fetchone()
+
+        if not exists:
+            # Enable the postGIS extension in the target database
+            cur.execute('CREATE EXTENSION postgis;')
+            print('postGIS extension enabled successfully!')
+
+        # Close the cursor and the connection to the target database
+        cur.close()
+        conn.close()
+        
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
-    finally:
-        if conn is not None:
-            conn.close()
 
 # Drop a database
 def drop_db():
@@ -86,36 +108,37 @@ def create_db_tables():
         CREATE TABLE IF NOT EXISTS parcels (
         parcel_id BIGINT UNIQUE PRIMARY KEY,
         farm_id BIGINT NOT NULL,
-        nat_grid_ref VARCHAR(12) NOT NULL
+        nat_grid_ref VARCHAR(12) NOT NULL,
+        geometry geometry(Polygon, 4326)
         );
     ''' 
     sql_topography = '''
         CREATE TABLE IF NOT EXISTS topography (
-        parcel_id BIGINT UNIQUE PRIMARY KEY,
+        parcel_id BIGINT UNIQUE,
         elevation DOUBLE PRECISION NOT NULL,
         slope DOUBLE PRECISION NOT NULL,
-        aspect VARCHAR(2) NOT NULL
+        aspect VARCHAR(2) NOT NULL,
+        FOREIGN KEY (parcel_id) REFERENCES parcels(parcel_id)
         );
     '''  
-    sql_soil = '''
-        CREATE TABLE IF NOT EXISTS soil (
-        parcel_id BIGINT UNIQUE PRIMARY KEY,
-        bdod DOUBLE PRECISION,
-        cec DOUBLE PRECISION,
-        cfvo DOUBLE PRECISION,
-        clay DOUBLE PRECISION,
-        nitrogen DOUBLE PRECISION,
-        phh2o DOUBLE PRECISION,
-        sand DOUBLE PRECISION,
-        silt DOUBLE PRECISION,
-        soc DOUBLE PRECISION,
-        ocs DOUBLE PRECISION,
-        ocd DOUBLE PRECISION
-        );
-    '''  
+    # sql_soil = '''
+    #     CREATE TABLE IF NOT EXISTS soil (
+    #     parcel_id BIGINT UNIQUE PRIMARY KEY,
+    #     bdod DOUBLE PRECISION,
+    #     cec DOUBLE PRECISION,
+    #     cfvo DOUBLE PRECISION,
+    #     clay DOUBLE PRECISION,
+    #     nitrogen DOUBLE PRECISION,
+    #     phh2o DOUBLE PRECISION,
+    #     sand DOUBLE PRECISION,
+    #     silt DOUBLE PRECISION,
+    #     soc DOUBLE PRECISION,
+    #     ocs DOUBLE PRECISION,
+    #     ocd DOUBLE PRECISION
+    #     );
+    # '''  
     sql_dict = {'parcels': sql_parcels,
-                'topography': sql_topography,
-                'soil': sql_soil}
+                'topography': sql_topography}
     try:
         conn = psycopg2.connect(user=db_user,
                                 password=db_password, 
@@ -257,7 +280,6 @@ def get_dtm_values(parcel_OS_code):
         dtm_vals = t[ind[0]]
         dict_keys = ['x', 'y', 'elevation', 'slope', 'aspect']
         dtm_dict = {key:val for (key, val) in zip(dict_keys, dtm_vals)}
-        print(f'Retrieving topographic data for OS cell \'{parcel_OS_code}\'')
         return dtm_dict
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -290,10 +312,11 @@ def get_parcel_data(parcel_OS_code, col_list):
         cur = conn.cursor()
         to_get = str(col_list).replace('[\'', '').replace('\']', '')
         sql = '''
-            SELECT parcel_ID, nat_grid_ref, {to_get} 
+            SELECT parcels.parcel_id, parcels.nat_grid_ref, topography.{to_get}
             FROM parcels
-            WHERE nat_grid_ref = '{parcel_OS_code}';
-            '''.format(parcel_OS_code=parcel_OS_code, to_get=to_get.replace("'", ""))
+            INNER JOIN topography ON parcels.parcel_id = topography.parcel_id
+            WHERE parcels.nat_grid_ref = '{parcel_OS_code}';
+        '''.format(parcel_OS_code=parcel_OS_code, to_get=to_get.replace("'", ""))
         cur.execute(sql)
         t = cur.fetchall()[0]
 
@@ -352,3 +375,77 @@ def get_whsd_data(parcel_OS_code, vars):
     finally:
         if conn is not None:
             conn.close()
+
+
+def find_farm(OSGrid_code):
+    """
+    Find farm managing the parcel at 'OSGrid code' location
+    """
+    db_name = db_parameters['db_name']
+    db_user = db_parameters['db_user']
+    db_password = db_parameters['db_password']
+    conn = None    
+    try:
+        conn = psycopg2.connect(user=db_user,
+                                password=db_password, 
+                                database=db_name, 
+                                host='127.0.0.1', 
+                                port= '5432')
+        conn.autocommit = True
+        cur = conn.cursor()
+
+        # Create a Shapely Point object from the lon-lat pair
+        lon, lat = osgrid2lonlat(OSGrid_code, EPSG=4326)
+        point = Point(lon, lat)
+
+        # Use ST_Contains to find the parcel that contains the point
+        query = """
+            SELECT p.parcel_id, p.farm_id
+            FROM parcels p
+            WHERE ST_Contains(p.geometry, ST_GeomFromText(%s, 4326))
+        """
+
+        # Execute the query with the lon-lat pair as a parameter
+        cur.execute(query, (point.wkt,))
+        parcel, farm = cur.fetchall()[0]
+        return {'parcel': parcel, 'farm':farm}
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def get_farm_data(identifier):
+    """
+    Retrieve farm data from the database.
+    
+    :param identifier: either a parcel centroid in the OSGrid code form, or a farm 
+           identifier (farm_id) in the RPA database or derived. If a centroid OSGrid code
+           is passed, then the farm identifier of the parcel referring to that location 
+           is retrieved. NB: farm IDs are integers, OSGrid codes are strings starting
+           with two letters (e.g. SX)
+    
+    Returns all parcels belonging to the farm.
+    """
+    if not isinstance(identifier, int):
+        farm = find_farm(identifier)['farm']
+    else:
+        farm = identifier
+
+    engine = None    
+    try:
+        database_url = f"postgresql://{db_parameters['db_user']}:{db_parameters['db_password']}@localhost/{db_parameters['db_name']}"
+        engine = create_engine(database_url)
+        sql = f"SELECT parcel_id, farm_id, nat_grid_ref, ST_AsText(geometry) as geometry FROM parcels;"
+        df = pd.read_sql(sql, engine)
+    
+        # Convert the WKT representation to a geospatial object
+        df['geometry'] = gpd.GeoSeries.from_wkt(df['geometry'])
+        df = gpd.GeoDataFrame(df, geometry='geometry')
+        return df
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if engine is not None:
+            engine.dispose()

@@ -11,10 +11,13 @@ farm model. It contains spatial data on parcels and farms including
 parcel IDs, farm IDs, a reference to the National Grid cell, and the 
 elevation, aspect and slope of each parcel
 '''
+from cropyields import db_parameters
 from cropyields.db_manager import create_db, create_db_tables, drop_db, populate_table, get_dtm_values
 import geopandas as gpd
 import pandas as pd
 from cropyields.utils import lonlat2osgrid
+from sqlalchemy import create_engine
+from cropyields.utils import printProgressBar
 
 # 1) Create new database and relations
 # ====================================
@@ -40,40 +43,42 @@ centroids = gpd.GeoSeries(parcels.centroid.to_crs("EPSG:4326"))
 coord_list = [(x,y) for x,y in zip(centroids.x , centroids.y)]
 os_parcel_ref = [lonlat2osgrid(x, figs=10) for x in coord_list]
 parcels['nat_grid_ref'] = os_parcel_ref
-parcel_data = parcels[['parcel_id', 'farm_id', 'nat_grid_ref']]
-parcel_data['parcel_id'] = parcel_data['parcel_id'].astype(int)
+parcels['parcel_id'] = parcels['parcel_id'].astype(int)
+parcels['farm_id'] = parcels['farm_id'].astype(int)
+parcels = parcels.to_crs(epsg=4326)
 
-# Create record list from parcel_data dataframe
-parcel_records = list(parcel_data.to_records(index=False))
+# database connection
+database_url = f"postgresql://{db_parameters['db_user']}:{db_parameters['db_password']}@localhost/{db_parameters['db_name']}"
+engine = create_engine(database_url)
 
-# add records in bulk to parcels table
-populate_table('parcels', parcel_records)
+# Send the spatial dataframe to the postGIS database
+table_name = 'parcels'
+parcels.to_postgis(table_name, engine, if_exists='append', index=False)
 
 # 2.2. topography
 # ---------------
 # Load terrain_50 DTM data from the terrain_50 database
 # elevation = {get_dtm_values(key).items() for key in parcels['nat_grid_ref']}
-# AAA: this takes a long time (8 hours or more) because the SQL query statement 
-# runs very slow
+# AAA: Make sure to create an index for x and y in the terrain_50.dtm.dtm_slope_elevation 
+# table before running this otherwise it takes more than 8 hours to run!
 elevation = {}
-missing_data = {}
+missing_data = []
 counter = 1
 tot_parcels = len(parcels)
 for i in parcels['nat_grid_ref']:
     try:
-        print(f'Processing OS grid {counter} of {tot_parcels}')
+        printProgressBar(counter, tot_parcels, prefix="Retrieving topographic data: ")
         a = get_dtm_values(i)
         elevation[i] = {'elevation':a['elevation'], 'slope':a['slope'], 'aspect':a['aspect']}
         counter += 1
     except:
-        print(f'no elevation data for cell \'{i}\'. Continuing...')
         missing_data[i]
         continue
 
 topography = pd.DataFrame.from_dict(elevation).transpose().reset_index()
 topography.rename({'index': 'nat_grid_ref'}, axis=1, inplace=True)
 
-parcel_data = parcels[['parcel_id', 'farm_id', 'nat_grid_ref']]
+parcel_data = parcels[['parcel_id', 'nat_grid_ref']]
 parcel_data['parcel_id'] = parcel_data['parcel_id'].astype(int) # disregard the warning!
 parcel_data = parcel_data.merge(topography, on='nat_grid_ref', how='left')
 parcel_data = parcel_data[['parcel_id', 'elevation', 'slope', 'aspect']]
@@ -82,4 +87,4 @@ parcel_data = parcel_data[['parcel_id', 'elevation', 'slope', 'aspect']]
 parcel_records = list(parcel_data.to_records(index=False))
 
 # add records in bulk to parcels table
-populate_table('parcels', parcel_records)
+populate_table('topography', parcel_records)
