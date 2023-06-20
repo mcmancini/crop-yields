@@ -19,10 +19,11 @@ db_parameters = {
 #   - OSGB_dir:   where the rechunked Chess_Scape data is stored
 #   - soilds_dir: where the soil data is stored.
 data_dirs = {
-    'ceda_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\Raw\\',
-    'OSGB_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\OsGrid\\',
-    'soils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\SoilData\\nc_files\\',
-    'utils_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\Utils\\'
+    'ceda_dir':   'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\Raw\\',
+    'OSGB_dir':   'D:\\Documents\\Data\\PCSE-WOFOST\\ClimateData\\nc_files\\OsGrid\\',
+    'soils_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\SoilData\\nc_files\\',
+    'utils_dir':  'D:\\Documents\\Data\\PCSE-WOFOST\\Utils\\',
+    'wofost_dir': 'D:\\Documents\\Data\\PCSE-WOFOST\\'
 }
 
 # DEM terrain_50 parameters

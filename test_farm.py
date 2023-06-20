@@ -1,6 +1,7 @@
 from cropyields.FarmManager import Farm
 import psycopg2
 from cropyields import db_parameters
+import pandas as pd
   
 # List of parcel codes
 conn = psycopg2.connect(user=db_parameters['db_user'],
@@ -21,10 +22,21 @@ parcel_os_code = [row[1] for row in t]
 if conn is not None:
     conn.close()
 
-OSCode = parcel_os_code[3]
+OSCode = parcel_os_code[1]
 a = Farm(OSCode)
 print(a)
+args = {
+    'years': [2020, 2021],
+    'crop': 'wheat',
+    'variety': 'Winter_wheat_101',
+    'agromanagement_file': 'winter_wheat_oneyr.agro'
+}
+dt = a.run(**args)
+a.plot_yields(2020, 'yield_ha')
+
+
 save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
-a.save_plot(f"{save_folder}\\{a.farm_id}.html")
-a.plot()
+year = 2020
+col = 'yield_ha'
+a.save_yield_map(year, col, f"{save_folder}\\{a.farm_id}_{year}.html")
 
