@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 LEEP, University of Exeter (UK)
+# Mattia Mancini (m.c.mancini@exeter.ac.uk), June 2023
+# ====================================================
 """
 A weather data provider reading its data from netCDF files.
 Code based on the 'excelweatherdataprovider contained in the
