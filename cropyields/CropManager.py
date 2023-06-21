@@ -1,5 +1,6 @@
 from pcse.fileinput import YAMLAgroManagementReader
 import datetime as dt
+import yaml
 
 class SingleRotationAgroManager(YAMLAgroManagementReader):
     """
@@ -120,11 +121,11 @@ class YamlAgromanager:
 
     _agromanagement_yaml = f"""
     AgroManagement:
-    - {DEFAULT_ARGS.start_year}-09-01:
+    - {DEFAULT_ARGS['start_year']}-09-01:
         CropCalendar:
-            crop_name: {DEFAULT_ARGS.crop}
-            variety_name: {DEFAULT_ARGS.variety}
-            crop_start_date: {DEFAULT_ARGS.crop_start_date}
+            crop_name: {DEFAULT_ARGS['crop']}
+            variety_name: {DEFAULT_ARGS['variety']}
+            crop_start_date: {DEFAULT_ARGS['crop_start_date']}
             crop_start_type: sowing
             crop_end_date:
             crop_end_type: maturity
@@ -134,16 +135,54 @@ class YamlAgromanager:
             name:  Timed N/P/K application table
             comment: All fertilizer amounts in kg/ha
             events_table:
-            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_1:02d}-{DEFAULT_ARGS.day_1:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_1}, P_amount: {DEFAULT_ARGS.P_amount_1}, K_amount: {DEFAULT_ARGS.K_amount_1}}}
-            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_2:02d}-{DEFAULT_ARGS.day_2:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_2}, P_amount: {DEFAULT_ARGS.P_amount_2}, K_amount: {DEFAULT_ARGS.K_amount_2}}}
-            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_3:02d}-{DEFAULT_ARGS.day_3:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_3}, P_amount: {DEFAULT_ARGS.P_amount_3}, K_amount: {DEFAULT_ARGS.K_amount_3}}}
+            - {DEFAULT_ARGS['year']}-{DEFAULT_ARGS['month_1']:02d}-{DEFAULT_ARGS['day_1']:02d}: {{N_amount: {DEFAULT_ARGS['N_amount_1']}, P_amount: {DEFAULT_ARGS['P_amount_1']}, K_amount: {DEFAULT_ARGS['K_amount_1']}}}
+            - {DEFAULT_ARGS['year']}-{DEFAULT_ARGS['month_2']:02d}-{DEFAULT_ARGS['day_2']:02d}: {{N_amount: {DEFAULT_ARGS['N_amount_2']}, P_amount: {DEFAULT_ARGS['P_amount_2']}, K_amount: {DEFAULT_ARGS['K_amount_2']}}}
+            - {DEFAULT_ARGS['year']}-{DEFAULT_ARGS['month_3']:02d}-{DEFAULT_ARGS['day_3']:02d}: {{N_amount: {DEFAULT_ARGS['N_amount_3']}, P_amount: {DEFAULT_ARGS['P_amount_3']}, K_amount: {DEFAULT_ARGS['K_amount_3']}}}
         StateEvents: Null
-    - {DEFAULT_ARGS.year}-09-01:
+    - {DEFAULT_ARGS['year']}-09-01:
     """
 
 
-    def __init__(self, yaml_string):
+    def __init__(self, yaml_string=None):
         if yaml_string is None:
             yaml_string = self._agromanagement_yaml
         else:
-            self.yaml_string = yaml_string
+            yaml_string = yaml_string
+        self.yaml_dict = yaml.safe_load(yaml_string)
+
+
+    def find_value(self, key):
+        """
+        Find value associated to 'key', if existing
+        """
+        result = self._recursive_search(self.yaml_dict, key)
+        if result is None:
+            print(f"Key '{key}' not found in the dictionary.")
+        return result
+
+    def _recursive_search(self, data, key):
+        """
+        Recursive search into yaml_dict to find specified key
+        regardless of level of nesting into yaml_dict
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k == key:
+                    return v
+                elif isinstance(v, (dict, list)):
+                    result = self._recursive_search(v, key)
+                    if result is not None:
+                        return result
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    result = self._recursive_search(item, key)
+                    if result is not None:
+                        return result
+        return None
+
+
+
+
+a = YamlAgromanager()
+a.find_key_value_pair('crop_start_date')
