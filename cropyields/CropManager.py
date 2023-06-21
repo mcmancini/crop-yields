@@ -87,3 +87,63 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
                     item[date_key]['CropCalendar']['variety_name'] = new_variety
 
         
+class YamlAgromanager:
+    """
+    Class based on the definition of a YAML template that 
+    allows to easily access abd alter agromanagement parameters 
+    programmatically
+    """
+    DEFAULT_START_YEAR = 2022
+
+    DEFAULT_ARGS = {
+        'start_year': DEFAULT_START_YEAR,
+        'crop': "wheat",
+        'variety': "Winter_wheat_106",
+        'crop_start_date': dt.date(DEFAULT_START_YEAR, 9, 1),
+        'year': DEFAULT_START_YEAR + 1,
+        'month_1': 3,
+        'month_2': 4,
+        'month_3': 5,
+        'day_1': 20, 
+        'day_2': 1, 
+        'day_3': 1,
+        'N_amount_1': 60, 
+        'N_amount_2': 100, 
+        'N_amount_3': 50,
+        'P_amount_1': 3, 
+        'P_amount_2': 13, 
+        'P_amount_3': 23,
+        'K_amount_1': 4, 
+        'K_amount_2': 14, 
+        'K_amount_3': 24
+    }
+
+    _agromanagement_yaml = f"""
+    AgroManagement:
+    - {DEFAULT_ARGS.start_year}-09-01:
+        CropCalendar:
+            crop_name: {DEFAULT_ARGS.crop}
+            variety_name: {DEFAULT_ARGS.variety}
+            crop_start_date: {DEFAULT_ARGS.crop_start_date}
+            crop_start_type: sowing
+            crop_end_date:
+            crop_end_type: maturity
+            max_duration: 365
+        TimedEvents:
+        -   event_signal: apply_npk
+            name:  Timed N/P/K application table
+            comment: All fertilizer amounts in kg/ha
+            events_table:
+            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_1:02d}-{DEFAULT_ARGS.day_1:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_1}, P_amount: {DEFAULT_ARGS.P_amount_1}, K_amount: {DEFAULT_ARGS.K_amount_1}}}
+            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_2:02d}-{DEFAULT_ARGS.day_2:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_2}, P_amount: {DEFAULT_ARGS.P_amount_2}, K_amount: {DEFAULT_ARGS.K_amount_2}}}
+            - {DEFAULT_ARGS.year}-{DEFAULT_ARGS.month_3:02d}-{DEFAULT_ARGS.day_3:02d}: {{N_amount: {DEFAULT_ARGS.N_amount_3}, P_amount: {DEFAULT_ARGS.P_amount_3}, K_amount: {DEFAULT_ARGS.K_amount_3}}}
+        StateEvents: Null
+    - {DEFAULT_ARGS.year}-09-01:
+    """
+
+
+    def __init__(self, yaml_string):
+        if yaml_string is None:
+            yaml_string = self._agromanagement_yaml
+        else:
+            self.yaml_string = yaml_string
