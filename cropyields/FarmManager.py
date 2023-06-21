@@ -86,20 +86,21 @@ class Farm:
                 'harvest_date': {}
         }
 
-        for year in years:
-            for parcel_id in self.parcel_ids:
-                if soilsource == 'SoilGrids':
-                    soildata = SoilGridsDataProvider(parcel_id)
-                else:
-                    soildata = WHSDDataProvider(parcel_id)
-                try:
-                    wdp = NetCDFWeatherDataProvider(parcel_id, rcp, ensemble, force_update=False)
-                except:
-                    print(f'failed to retrieve weather data for parcel at \'{parcel_id}\'')
-                parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
+        for parcel_id in self.parcel_ids:
+            if soilsource == 'SoilGrids':
+                soildata = SoilGridsDataProvider(parcel_id)
+            else:
+                soildata = WHSDDataProvider(parcel_id)
+            try:
+                wdp = NetCDFWeatherDataProvider(parcel_id, rcp, ensemble, force_update=False)
+            except:
+                print(f'failed to retrieve weather data for parcel at \'{parcel_id}\'')
+            parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
+            if agromanagement.retrieve_variety != variety:
+                agromanagement.change_variety(variety)
+            
+            for year in years:
                 agromanagement.change_year(year)
-                if agromanagement.retrieve_variety != variety:
-                    agromanagement.change_variety(variety)
                 wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
                 try:
                     wofsim.run_till_terminate()

@@ -1,7 +1,7 @@
 from cropyields.FarmManager import Farm
 import psycopg2
 from cropyields import db_parameters
-import pandas as pd
+import time 
   
 # List of parcel codes
 conn = psycopg2.connect(user=db_parameters['db_user'],
@@ -31,7 +31,10 @@ args = {
     'variety': 'Winter_wheat_101',
     'agromanagement_file': 'winter_wheat_oneyr.agro'
 }
+start_time = time.time()
 dt = a.run(**args)
+end_time = time.time()
+end_time - start_time
 a.plot_yields(2020, 'yield_ha')
 
 
@@ -39,4 +42,3 @@ save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
 year = 2020
 col = 'yield_ha'
 a.save_yield_map(year, col, f"{save_folder}\\{a.farm_id}_{year}.html")
-
