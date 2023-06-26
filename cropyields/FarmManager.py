@@ -111,8 +111,8 @@ class Farm:
                 df = pd.DataFrame(output)
                 df.set_index('day', inplace=True, drop=True)
 
-                result_dict[parcel_id]['yield_ha'][year] = df['TWSO'].max()
-                result_dict[parcel_id]['yield_parcel'][year] = df['TWSO'].max() * result_dict[parcel_id]['area']
+                result_dict[parcel_id]['yield_ha'][year] = round(df['TWSO'].max() / 1e3, 3) * 1.14
+                result_dict[parcel_id]['yield_parcel'][year] = round((df['TWSO'].max() / 1e3) * 1.14 * result_dict[parcel_id]['area'], 3)
                 result_dict[parcel_id]['harvest_date'][year] = df['TWSO'].idxmax().strftime('%Y-%m-%d')
         
         self.yields = result_dict
@@ -150,7 +150,7 @@ class Farm:
         m.save(savefile)
 
     
-    def plot_yields(self, year, col):
+    def plot_yields(self, year, col, filename=None):
         """
         Plot farm yields as a heatmap on a topographic basemap.
         -------------------------------------------------------
@@ -169,8 +169,12 @@ class Farm:
             cmap = cm.get_cmap('hot').reversed()
             df.plot(ax=ax, column=col, cmap=cmap, linewidth=0.8, edgecolor='black', legend=True)
             ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
-            plt.title(f"Farm {self.farm_id}")
-            plt.show()
+            plt.title(f"Wheat yields for farm {self.farm_id} - [t/ha]")
+            if filename:
+                filename  = self._check_tiff_extension(filename)
+                plt.savefig(filename, dpi=300, bbox_inches='tight')
+            else:
+                plt.show()
     
 
     def save_yield_map(self, year, col, filename):
@@ -207,6 +211,14 @@ class Farm:
             raise ValueError("Invalid file extension. File must have an '.html' extension.")
         else:
             return filename
+        
+
+    @staticmethod
+    def _check_tiff_extension(filename):
+        if not filename.endswith(".tiff"):
+            raise ValueError("Invalid file extension. File must have a '.tiff' extension.")
+        else:
+            return filename
 
 
     @staticmethod
@@ -219,7 +231,7 @@ class Farm:
     @staticmethod
     def _get_yield_data(yield_dict, year, col):
         selected_data = [(key, value['geometry'], value[col][year]) for key, value in yield_dict.items()]
-        df = pd.DataFrame(selected_data, columns=['parcel', 'geometry', 'yield_ha'])
+        df = pd.DataFrame(selected_data, columns=['parcel', 'geometry', col])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
         return gdf
     
