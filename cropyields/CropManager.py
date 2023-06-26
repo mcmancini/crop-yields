@@ -90,9 +90,9 @@ class SingleRotationAgroManager(YAMLAgroManagementReader):
         
 class YamlAgromanager:
     """
-    Class based on the definition of a YAML template that 
-    allows to easily access abd alter agromanagement parameters 
-    programmatically
+    Class based on the definition of a standard YAML template 
+    that allows to easily access and alter agromanagement 
+    parameters programmatically
     """
     DEFAULT_START_YEAR = 2022
 
@@ -184,5 +184,115 @@ class YamlAgromanager:
 
 
 
-a = YamlAgromanager()
-a.find_key_value_pair('crop_start_date')
+class Crop:
+    """
+    General crop class that includes standard agromanagement
+    which can be altered if in a rotation, or due to 
+    specific farm management practices
+    """
+
+    DEFAULT_ARGS = {
+        'TimedEvents': 'Null'
+    }
+
+    
+    def __init__(self, crop, variety, calendar_year, **kwargs):
+        self.crop = crop
+        self.variety = variety
+        self.calendar_year = calendar_year
+        self.agromanagement = self._generate_agromanagement(**kwargs)
+    
+
+    def _generate_agromanagement(self, **kwargs):
+        args = self.DEFAULT_ARGS.copy()
+        args.update(kwargs)
+
+        # Start of the crop calendar
+        if 'start_crop_calendar'not in args or args['start_crop_calendar'] is None:
+            if 'winter' in self.variety.lower():
+                args['start_crop_calendar'] = dt.date(self.calendar_year, 9, 1)
+            else:
+                args['start_crop_calendar'] = dt.date(self.calendar_year, 3, 1)
+        
+        # End of the crop calendar
+        if 'end_crop_calendar'not in kwargs or kwargs['end_crop_calendar'] is None:
+            if 'winter' in self.variety.lower():
+                args['end_crop_calendar'] = dt.date(self.calendar_year + 1, 9, 1)
+            else:
+                args['end_crop_calendar'] = dt.date(self.calendar_year, 11, 1)
+
+        # Crop sowing date
+        if 'crop_start_date' not in args or args['crop_start_date'] is None:
+            if 'winter' in self.variety.lower():
+                args['crop_start_date'] = dt.date(self.calendar_year, 11, 5)
+            else:
+                args['crop_start_date'] = dt.date(self.calendar_year, 4, 1)
+
+        # Fertilisation or irrigation
+        if 'apply_npk' in args and args['apply_npk'] is not None:
+            events_table_lines = []
+            for event in args['apply_npk']:
+                timing = self._check_timing_event(args['start_crop_calendar'], event['date'], args['end_crop_calendar'])
+                line = f"- {timing.year}-{timing.month:02d}-{timing.day:02d}: {{N_amount: {event['N_amount']}, P_amount: {event['P_amount']}, K_amount: {event['K_amount']}}}"
+                events_table_lines.append(line)
+            
+            events_table = '\n                '.join(events_table_lines)
+
+            timed_events_yaml = f"""
+            TimedEvents:
+            -   event_signal: apply_npk
+                name:  Timed N/P/K application table
+                comment: All fertilizer amounts in kg/ha
+                events_table:
+                {events_table}
+            """
+        else:
+            timed_events_yaml = f"TimedEvents: {self.DEFAULT_ARGS['TimedEvents']}"
+
+        # Combine all in agromanagement
+        _agromanagement_yaml = f"""
+        - {args['start_crop_calendar']}:
+            CropCalendar:
+                crop_name: {self.crop}
+                variety_name: {self.variety}
+                crop_start_date: {args['crop_start_date']}
+                crop_start_type: sowing
+                crop_end_date:
+                crop_end_type: maturity
+                max_duration: 365
+            {timed_events_yaml}
+            StateEvents: Null
+        - {args['end_crop_calendar']}:
+            CropCalendar: null
+            TimedEvents: null
+            StateEvents: null
+        """
+
+        # remove empty lines
+        _agromanagement_yaml = '\n'.join([line for line in _agromanagement_yaml.split('\n') if line.strip()])
+        return _agromanagement_yaml
+
+    @staticmethod
+    def _check_timing_event(crop_sowing_date, event_timing, end_crop_calendar):
+        if event_timing < crop_sowing_date or event_timing > end_crop_calendar:
+            raise ValueError(f"The event timing date \'{event_timing}\' falls outside the crop calendar [{crop_sowing_date}, {end_crop_calendar}]")
+        else:
+            return event_timing
+        
+
+class CropRotation:
+    """
+    Class representing a crop rotation consisting of multiple crops
+    """
+
+    def __init__(self, *crops):
+        self.crops = crops
+        self.rotation = self._generate_rotation()
+
+
+    def _generate_rotation(self):
+        rotation_yaml = ""
+        for crop in self.crops:
+            rotation_yaml += crop.agromanagement + "\n"
+        
+        return rotation_yaml
