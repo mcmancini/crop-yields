@@ -133,4 +133,6 @@ for c, df in zip(colors, results):
 
 ax.set_title('TWSO')
 fig.autofmt_xdate()
+save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
+plt.savefig(f"{save_folder}\\sowing_date_{parcel}.tiff", dpi=300, bbox_inches='tight')
 plt.show()
