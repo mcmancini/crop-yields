@@ -18,6 +18,8 @@ import contextily as ctx
 import folium
 from cropyields.db_manager import find_farm, get_farm_data
 import geopandas as gpd
+import datetime as dt
+import numpy as np
 
 class Farm:
     """
@@ -45,7 +47,6 @@ class Farm:
     cropd = config.cropd
     sitedata = config.sitedata
     output_dir = config.output_dir
-    agromanagement_dir = config.agromanagement_dir
 
 
     def __init__(self, identifier):
@@ -55,23 +56,36 @@ class Farm:
     
     def run(self, **kwargs):
         """
-        Run Wofost on an instance of the class 'Farm'
+        Run Wofost on an instance of the class 'Farm'.
+        :param **kwargs: a dictionary that contains parcel-rotation
+               key-value pairs. Rotations are instances of the CropRotation
+               class, which takes consecutive instances of the Crop class.
+               e.g.:
+               {'SX123456': rotation_1, 'SW123123': rotation_2, ...}
+
+               potatoes = Crop('potato', 'Potato_701', 2023, **potato_args)
+               wheat = Crop('wheat', 'Winter_wheat_06', 2023, **wheat_args)
+               maize = Crop('maize', 'maize_01', 2025, **maize_args)
+               rotation_1 = CropRotation(potatoes, wheat, maize)
+               rotation_2 = CropRotation(x, y, x)
+               print(rotation_1.rotation)
         """
-        years = kwargs.get('years')
-        crop = kwargs.get('crop')
-        variety = kwargs.get('variety')
-        agromanagement_file = kwargs.get('agromanagement_file')
+        # years = kwargs.get('years')
+        # crop = kwargs.get('crop')
+        # variety = kwargs.get('variety')
+        # agromanagement_file = kwargs.get('agromanagement_file')
         rcp = kwargs.get('rcp') or Farm.rcp
         ensemble = kwargs.get('ensemble') or Farm.ensemble
         soilsource = kwargs.get('soilsource') or Farm.soilsource
         cropd = kwargs.get('cropd') or Farm.cropd
-        cropd.set_active_crop(crop, variety)
         sitedata = kwargs.get('sitedata') or Farm.sitedata
         output_dir = kwargs.get('output_dir') or Farm.output_dir
-        agromanagement_dir = kwargs.get('agromanagement_dir') or Farm.agromanagement_dir
-        agromanagement = SingleRotationAgroManager(agromanagement_dir + agromanagement_file)
+        # agromanagement_dir = kwargs.get('agromanagement_dir') or Farm.agromanagement_dir
+        # agromanagement = SingleRotationAgroManager(agromanagement_dir + agromanagement_file)
 
-        years = self._check_input_year(years)
+
+
+        # years = self._check_input_year(years)
         result_dict = {}
 
         for x, row in self.parcel_data.iterrows():
@@ -81,26 +95,31 @@ class Farm:
             result_dict[parcel_id] = {
                 'geometry': geometry,
                 'area': area,
-                'yield_ha': {},
-                'yield_parcel':{},
-                'harvest_date': {}
+                'crop': {}
         }
+            
+        farmed_parcels = kwargs.keys()
 
         for parcel_id in self.parcel_ids:
-            if soilsource == 'SoilGrids':
-                soildata = SoilGridsDataProvider(parcel_id)
-            else:
-                soildata = WHSDDataProvider(parcel_id)
-            try:
-                wdp = NetCDFWeatherDataProvider(parcel_id, rcp, ensemble, force_update=False)
-            except:
-                print(f'failed to retrieve weather data for parcel at \'{parcel_id}\'')
-            parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
-            if agromanagement.retrieve_variety != variety:
-                agromanagement.change_variety(variety)
-            
-            for year in years:
-                agromanagement.change_year(year)
+            if parcel_id in farmed_parcels:
+                if soilsource == 'SoilGrids':
+                    soildata = SoilGridsDataProvider(parcel_id)
+                else:
+                    soildata = WHSDDataProvider(parcel_id)
+                try:
+                    wdp = NetCDFWeatherDataProvider(parcel_id, rcp, ensemble, force_update=False)
+                except:
+                    print(f'failed to retrieve weather data for parcel at \'{parcel_id}\'')
+
+                # agromanagement
+                rotation = kwargs[parcel_id]
+                agromanagement = rotation.rotation
+                crop_list = rotation.find_value('crop_name')
+                crop_name = next(iter(rotation.crop_list[0]))
+                crop_variety = rotation.crop_list[0][crop_name]
+                crop_start_date = rotation.find_value('crop_start_date')
+                cropd.set_active_crop(crop_name, crop_variety)
+                parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
                 wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
                 try:
                     wofsim.run_till_terminate()
@@ -111,10 +130,25 @@ class Farm:
                 df = pd.DataFrame(output)
                 df.set_index('day', inplace=True, drop=True)
 
-                result_dict[parcel_id]['yield_ha'][year] = round(df['TWSO'].max() / 1e3, 3) * 1.14
-                result_dict[parcel_id]['yield_parcel'][year] = round((df['TWSO'].max() / 1e3) * 1.14 * result_dict[parcel_id]['area'], 3)
-                result_dict[parcel_id]['harvest_date'][year] = df['TWSO'].idxmax().strftime('%Y-%m-%d')
-        
+                range_lst = crop_start_date + [df.index.max()]
+
+                for i in range(len(range_lst) - 1):
+                    crop = crop_list[i]
+                    start_date = range_lst[i]
+                    end_date = range_lst[i+1] - dt.timedelta(days=1)
+                    crop_df = df[start_date:end_date]
+                    if not np.isnan(crop_df['TWSO']).all():
+                        result_dict[parcel_id]['crop'][crop] = {
+                            'yield_ha': round(crop_df['TWSO'].max() / 1e3, 3) * 1.14,
+                            'yield_parcel': round((crop_df['TWSO'].max() / 1e3) * 1.14 * result_dict[parcel_id]['area'], 3),
+                            'harvest_date': crop_df['TWSO'].idxmax().strftime('%Y-%m-%d')
+                        }
+                    else:
+                        result_dict[parcel_id]['crop'][crop] = {
+                            'yield_ha': 0,
+                            'yield_parcel': 0,
+                            'harvest_date': 'N/A'
+                        }
         self.yields = result_dict
         return self.yields
 

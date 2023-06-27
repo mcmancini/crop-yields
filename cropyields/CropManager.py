@@ -182,8 +182,6 @@ class YamlAgromanager:
         return None
 
 
-
-
 class Crop:
     """
     General crop class that includes standard agromanagement
@@ -210,7 +208,7 @@ class Crop:
         # Start of the crop calendar
         if 'start_crop_calendar'not in args or args['start_crop_calendar'] is None:
             if 'winter' in self.variety.lower():
-                args['start_crop_calendar'] = dt.date(self.calendar_year, 9, 1)
+                args['start_crop_calendar'] = dt.date(self.calendar_year, 10, 1)
             else:
                 args['start_crop_calendar'] = dt.date(self.calendar_year, 3, 1)
         
@@ -219,7 +217,7 @@ class Crop:
             if 'winter' in self.variety.lower():
                 args['end_crop_calendar'] = dt.date(self.calendar_year + 1, 9, 1)
             else:
-                args['end_crop_calendar'] = dt.date(self.calendar_year, 11, 1)
+                args['end_crop_calendar'] = dt.date(self.calendar_year, 9, 30)
 
         # Crop sowing date
         if 'crop_start_date' not in args or args['crop_start_date'] is None:
@@ -232,7 +230,7 @@ class Crop:
         if 'apply_npk' in args and args['apply_npk'] is not None:
             events_table_lines = []
             for event in args['apply_npk']:
-                timing = self._check_timing_event(args['start_crop_calendar'], event['date'], args['end_crop_calendar'])
+                timing = self._def_timing_event(self.variety, self.calendar_year, event)
                 line = f"- {timing.year}-{timing.month:02d}-{timing.day:02d}: {{N_amount: {event['N_amount']}, P_amount: {event['P_amount']}, K_amount: {event['K_amount']}}}"
                 events_table_lines.append(line)
             
@@ -273,26 +271,82 @@ class Crop:
         return _agromanagement_yaml
 
     @staticmethod
-    def _check_timing_event(crop_sowing_date, event_timing, end_crop_calendar):
-        if event_timing < crop_sowing_date or event_timing > end_crop_calendar:
-            raise ValueError(f"The event timing date \'{event_timing}\' falls outside the crop calendar [{crop_sowing_date}, {end_crop_calendar}]")
+    def _def_timing_event(variety, calendar_year, event):
+        if 'winter' in variety.lower():
+            if 'date' not in event:
+                timing = dt.date(calendar_year + 1, event['month'], event['day'])
+            else:
+                timing = event['date']
         else:
-            return event_timing
+            if 'date' not in event:
+                timing = dt.date(calendar_year, event['month'], event['day'])
+            else:
+                timing = event['date']
+        return timing
         
 
 class CropRotation:
     """
-    Class representing a crop rotation consisting of multiple crops
+    Class generating crop rotations
     """
 
     def __init__(self, *crops):
-        self.crops = crops
-        self.rotation = self._generate_rotation()
+        self.rotation = self._generate_rotation(crops)
+        self.crop_list = self._list_crops()
 
 
-    def _generate_rotation(self):
+    def _generate_rotation(self, crops):
         rotation_yaml = ""
-        for crop in self.crops:
+        for crop in crops:
             rotation_yaml += crop.agromanagement + "\n"
-        
-        return rotation_yaml
+        rotation = yaml.safe_load(rotation_yaml)
+        return rotation
+    
+
+    def _list_crops(self):
+        crops = self.find_value('crop_name')
+        varieties = self.find_value('variety_name')
+        return [{crop: variety} for crop, variety in zip(crops, varieties)]
+    
+
+    def find_value(self, key):
+        """
+        Find value associated to 'key', if existing
+        """
+        result = self._recursive_search(self.rotation, key)
+        if result is None:
+            print(f"Key '{key}' not found in the dictionary.")
+        return result
+
+
+    def _recursive_search(self, data, key):
+        """
+        Recursive search into yaml_dict to find specified key
+        regardless of level of nesting into yaml_dict
+        """
+        results = []
+
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k == key:
+                    results.append(v)
+                elif isinstance(v, (dict, list)):
+                    results.extend(self._recursive_search(v, key))
+
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    results.extend(self._recursive_search(item, key))
+
+        return results
+    
+    def __str__(self):
+        msg = "======================================================\n"
+        msg +=  "               Rotation characteristics\n"
+        msg += "---------------------Description----------------------\n"
+        crop_succession = ", ".join(", ".join(crop_dict.keys()) for crop_dict in self.crops)
+        msg += "Crop succession: " + crop_succession + "\n"
+        crop_varieties = ", ".join(", ".join(crop_dict.values()) for crop_dict in self.crops)
+        msg += "Crop varieties: " + crop_varieties + "\n"
+        msg += "======================================================\n\n"
+        return msg
