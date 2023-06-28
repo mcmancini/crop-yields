@@ -194,9 +194,8 @@ class Crop:
     }
 
     
-    def __init__(self, crop, variety, calendar_year, **kwargs):
+    def __init__(self, calendar_year, crop, **kwargs):
         self.crop = crop
-        self.variety = variety
         self.calendar_year = calendar_year
         self.agromanagement = self._generate_agromanagement(**kwargs)
     
@@ -205,26 +204,34 @@ class Crop:
         args = self.DEFAULT_ARGS.copy()
         args.update(kwargs)
 
+        # Variety
+        if  self.crop.lower() != 'fallow':
+            if 'variety'not in args or args['variety'] is None:
+                raise ValueError("Missing argument: \'variety\' argument is required.") 
+            else:
+                self.variety = args['variety']
+
         # Start of the crop calendar
-        if 'start_crop_calendar'not in args or args['start_crop_calendar'] is None:
-            if 'winter' in self.variety.lower():
-                args['start_crop_calendar'] = dt.date(self.calendar_year, 10, 1)
-            else:
-                args['start_crop_calendar'] = dt.date(self.calendar_year, 3, 1)
+        if self.crop.lower() != 'fallow':
+            if ('start_crop_calendar'not in args or args['start_crop_calendar'] is None):
+                if 'winter' in self.variety.lower():
+                    args['start_crop_calendar'] = dt.date(self.calendar_year, 10, 1)
+                else:
+                    args['start_crop_calendar'] = dt.date(self.calendar_year, 3, 1)
+        else:
+            if ('start_crop_calendar'not in args or args['start_crop_calendar'] is None):
+                raise ValueError("Please provide a crop calendar start date for \'fallow\' as kwargs['start_crop_calendar']")
         
-        # End of the crop calendar
-        if 'end_crop_calendar'not in kwargs or kwargs['end_crop_calendar'] is None:
-            if 'winter' in self.variety.lower():
-                args['end_crop_calendar'] = dt.date(self.calendar_year + 1, 9, 1)
-            else:
-                args['end_crop_calendar'] = dt.date(self.calendar_year, 9, 30)
 
         # Crop sowing date
-        if 'crop_start_date' not in args or args['crop_start_date'] is None:
-            if 'winter' in self.variety.lower():
-                args['crop_start_date'] = dt.date(self.calendar_year, 11, 5)
-            else:
-                args['crop_start_date'] = dt.date(self.calendar_year, 4, 1)
+        if self.crop.lower() != 'fallow':
+            if 'crop_start_date' not in args or args['crop_start_date'] is None:
+                if 'winter' in self.variety.lower():
+                    args['crop_start_date'] = dt.date(self.calendar_year, 11, 5)
+                else:
+                    args['crop_start_date'] = dt.date(self.calendar_year, 4, 1)
+        else:
+            args['crop_start_date'] = "None"
 
         # Fertilisation or irrigation
         if 'apply_npk' in args and args['apply_npk'] is not None:
@@ -234,37 +241,41 @@ class Crop:
                 line = f"- {timing.year}-{timing.month:02d}-{timing.day:02d}: {{N_amount: {event['N_amount']}, P_amount: {event['P_amount']}, K_amount: {event['K_amount']}}}"
                 events_table_lines.append(line)
             
-            events_table = '\n                '.join(events_table_lines)
+            events_table = '\n                    '.join(events_table_lines)
 
             timed_events_yaml = f"""
-            TimedEvents:
-            -   event_signal: apply_npk
-                name:  Timed N/P/K application table
-                comment: All fertilizer amounts in kg/ha
-                events_table:
-                {events_table}
+                TimedEvents:
+                -   event_signal: apply_npk
+                    name:  Timed N/P/K application table
+                    comment: All fertilizer amounts in kg/ha
+                    events_table:
+                    {events_table}
             """
         else:
             timed_events_yaml = f"TimedEvents: {self.DEFAULT_ARGS['TimedEvents']}"
 
         # Combine all in agromanagement
-        _agromanagement_yaml = f"""
-        - {args['start_crop_calendar']}:
-            CropCalendar:
-                crop_name: {self.crop}
-                variety_name: {self.variety}
-                crop_start_date: {args['crop_start_date']}
-                crop_start_type: sowing
-                crop_end_date:
-                crop_end_type: maturity
-                max_duration: 365
-            {timed_events_yaml}
-            StateEvents: Null
-        - {args['end_crop_calendar']}:
-            CropCalendar: null
-            TimedEvents: null
-            StateEvents: null
-        """
+        if self.crop != 'fallow':
+            _agromanagement_yaml = f"""
+            - {args['start_crop_calendar']}:
+                CropCalendar:
+                    crop_name: {self.crop}
+                    variety_name: {self.variety}
+                    crop_start_date: {args['crop_start_date']}
+                    crop_start_type: sowing
+                    crop_end_date:
+                    crop_end_type: maturity
+                    max_duration: 365
+                    {timed_events_yaml}
+                StateEvents: Null
+            """
+        else:
+            _agromanagement_yaml = f"""
+            - {args['start_crop_calendar']}:
+                CropCalendar: null
+                TimedEvents: null
+                StateEvents: null
+            """
 
         # remove empty lines
         _agromanagement_yaml = '\n'.join([line for line in _agromanagement_yaml.split('\n') if line.strip()])
@@ -291,16 +302,15 @@ class CropRotation:
     """
 
     def __init__(self, *crops):
-        self.rotation = self._generate_rotation(crops)
-        self.crop_list = self._list_crops()
-
+        self.rotation =  yaml.safe_load(self._generate_rotation(crops))
+        self.crops = self._list_crops()
+        self.yaml_rotation = self._generate_rotation(crops)
 
     def _generate_rotation(self, crops):
         rotation_yaml = ""
         for crop in crops:
             rotation_yaml += crop.agromanagement + "\n"
-        rotation = yaml.safe_load(rotation_yaml)
-        return rotation
+        return rotation_yaml
     
 
     def _list_crops(self):
@@ -349,4 +359,5 @@ class CropRotation:
         crop_varieties = ", ".join(", ".join(crop_dict.values()) for crop_dict in self.crops)
         msg += "Crop varieties: " + crop_varieties + "\n"
         msg += "======================================================\n\n"
+        msg += self.yaml_rotation
         return msg
