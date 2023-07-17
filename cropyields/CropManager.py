@@ -400,6 +400,20 @@ class Crop:
             return 'crop'
     
 
+    def __str__(self):
+        msg = "======================================================\n"
+        msg += "               Crop characteristics\n"
+        msg += "---------------------Description----------------------\n"
+        msg += "Crop: " + self.crop + "\n"
+        if self.variety is not None:
+            msg += "Variety: " + self.variety + "\n"
+        msg += "Crop type: " + self.crop_type + "\n"
+        msg += "-------------------Agro-management--------------------\n"
+        msg += self.agromanagement
+
+        return msg
+    
+
 class CropRotation:
     """
     Class generating crop rotations combining agromanagement
@@ -465,3 +479,5 @@ class CropRotation:
         msg += "Crop varieties: " + crop_varieties + "\n"
         msg += "======================================================\n\n"
         msg += self.yaml_rotation
+        
+        return msg
