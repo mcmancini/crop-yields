@@ -270,6 +270,8 @@ class Crop:
                 raise ValueError("Missing argument: \'variety\' argument is required.") 
             else:
                 self.variety = args['variety']
+        else:
+            self.variety = None
 
         # Start of the crop
         if self.crop.lower() != 'fallow':
