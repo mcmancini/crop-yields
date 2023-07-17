@@ -24,7 +24,7 @@ agromanagement_dir = base_dir + 'pcse_examples\\'
 output_dir = base_dir + 'WOFOST_output\\'
 
 # CROP PARAMETERS
-cropd = YAMLCropDataProvider(crop_dir)
+cropd = YAMLCropDataProvider(crop_dir, force_reload=True)
 
 # SITE PARAMETERS
 sitedata = WOFOST80SiteDataProvider(WAV=100, CO2=360, NAVAILI=80, PAVAILI=10, KAVAILI=20)
@@ -42,8 +42,8 @@ key has been passed (as in for example npk_1['date'] = dt.time(2023, 5, 21)), th
 will be used instead.
 """
 
-# WEHAT PARAMETERS
-# ================
+# WHEAT PARAMETERS
+# ================  
 npk_1 = {
     'month': 2,
     'day': 20,
@@ -70,6 +70,10 @@ npk_3 = {
 
 
 wheat_args = {
+    'crop_start_month': 11,
+    'crop_start_day': 5,
+    'crop_end_type': 'maturity',
+    'max_duration': 365,
     'apply_npk': [npk_1, npk_2, npk_3]
 }
 
@@ -100,6 +104,10 @@ npk_3 = {
 }
 
 maize_args = {
+    'crop_start_month': 4,
+    'crop_start_day': 1,
+    'crop_end_type': 'maturity',
+    'max_duration': 365,
     'apply_npk': [npk_1, npk_2, npk_3]
 }
 
@@ -138,5 +146,38 @@ npk_4 = {
 }
 
 potato_args = {
+    'crop_start_month': 4,
+    'crop_start_day': 1,
+    'crop_end_type': 'maturity',
+    'max_duration': 365,
     'apply_npk': [npk_1, npk_2, npk_3, npk_4]
+}
+
+# RYE GRASS PARAMETERS
+# ====================
+max_duration = 730 # days
+mowing_1 = {
+    'month': 5,
+    'day': 1,
+    'biomass_remaining': 320 #kg/ha
+}
+
+mowing_2 = {
+    'month': 5,
+    'day': 25,
+    'biomass_remaining': 320
+}
+
+mowing_3 = {
+    'month': 6,
+    'day': 5,
+    'biomass_remaining': 320
+}
+
+ryegrass_args = {
+    'crop_start_month': 11,
+    'crop_start_day': 5,
+    'crop_end_type': 'maturity',
+    'max_duration': max_duration,
+    'mowing': [mowing_1, mowing_2, mowing_3]
 }
