@@ -8,7 +8,8 @@ Created: 19-September-2022
 
 Script that downloads climate data from the CEDA archive and saves it on disk
 It requires a CEDA account, and the data is downloaded through ftp. 
-Credentials to access CEDA are stored as environment variables.
+Credentials to access CEDA are stored as environment variables and
+loaded in the __init__ file of the cropyield package.
 
 CHESS-SCAPE data downloaded from this address:
 https://catalogue.ceda.ac.uk/uuid/8194b416cbee482b89e0dfbe17c5786c
