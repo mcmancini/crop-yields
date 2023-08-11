@@ -32,12 +32,6 @@ class Farm:
            identifier (farm_id) in the RPA database or derived. If a centroid OSGrid code
            is passed, then the farm identifier of the parcel referring to that location 
            is retrieved
-    ======================================================================================
-    AAA: This class is for now only used as a container, which allows to retrieve and 
-         store in an instance the characteristics of the farm. This allows to retrieve
-         the listof parcels for a farm to run WOFOST.
-         In the future, this will be set up to have a method that runs WOFOST within
-         defining agromanagement and temporal scales of interest.
     """
 
     # Class defaults for Wofost runs
@@ -54,7 +48,7 @@ class Farm:
         self.farm_area, self.num_parcels, self.parcel_ids, self.parcel_data, self.lon, self.lat = self._get_farm_data(identifier)
 
     
-    def run(self, **kwargs):
+    def run_rotation(self, **kwargs):
         """
         Run Wofost on an instance of the class 'Farm'.
         :param **kwargs: a dictionary that contains parcel-rotation
@@ -70,20 +64,11 @@ class Farm:
                rotation_2 = CropRotation(x, y, x)
                print(rotation_1.rotation)
         """
-        # years = kwargs.get('years')
-        # crop = kwargs.get('crop')
-        # variety = kwargs.get('variety')
-        # agromanagement_file = kwargs.get('agromanagement_file')
         rcp = kwargs.get('rcp') or Farm.rcp
         ensemble = kwargs.get('ensemble') or Farm.ensemble
         soilsource = kwargs.get('soilsource') or Farm.soilsource
         cropd = kwargs.get('cropd') or Farm.cropd
         sitedata = kwargs.get('sitedata') or Farm.sitedata
-        output_dir = kwargs.get('output_dir') or Farm.output_dir
-        # agromanagement_dir = kwargs.get('agromanagement_dir') or Farm.agromanagement_dir
-        # agromanagement = SingleRotationAgroManager(agromanagement_dir + agromanagement_file)
-
-
 
         # years = self._check_input_year(years)
         result_dict = {}
@@ -151,92 +136,162 @@ class Farm:
                         }
         self.yields = result_dict
         return self.yields
-
-
-    def plot(self):
-        """
-        Basic plotting functionality for class Farm
-        """
-        df = self.parcel_data.to_crs("EPSG:3857")
-        ax = df.plot(edgecolor="red",
-                     facecolor="none",  
-                     linewidth=2)
-        # Add OpenStreetMap basemap
-        ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
-        plt.title(f"Farm {self.farm_id}")
-        plt.show()
-
-
-    def save_plot(self, filename):
-        """
-        Save html file containing interactive map with an overlay of the farm.
-        Output file extension is .html
-        """
-        df = self.parcel_data
-        m = folium.Map(location=[self.lat, self.lon])
-        for _, r in df.iterrows():
-            sim_geo = gpd.GeoSeries(r["geometry"])
-            geo_j = sim_geo.to_json()
-            geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {"fillColor": "orange"})
-            folium.Popup(r["nat_grid_ref"]).add_to(geo_j)
-            geo_j.add_to(m)
-        savefile = self._check_html_extension(filename)
-        m.save(savefile)
-
-    
-    def plot_yields(self, year, col, filename=None):
-        """
-        Plot farm yields as a heatmap on a topographic basemap.
-        -------------------------------------------------------
-        Input parameters:
-        :param year: year for which yields are plotted
-        :col value: either 'yield_ha' or 'yield_parcel'
-        """
-        if self.yields is None:
-            print("No yields data available. Please run the simulation first.")
-            return
-        else:
-            yield_df = self._get_yield_data(self.yields, year, col)
-            yield_df = yield_df.set_crs(4326)
-            df = yield_df.to_crs("EPSG:3857")
-            fig, ax = plt.subplots(figsize=(10, 10))
-            cmap = cm.get_cmap('hot').reversed()
-            df.plot(ax=ax, column=col, cmap=cmap, linewidth=0.8, edgecolor='black', legend=True)
-            ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
-            plt.title(f"Wheat yields for farm {self.farm_id} - [t/ha]")
-            if filename:
-                filename  = self._check_tiff_extension(filename)
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-            else:
-                plt.show()
     
 
-    def save_yield_map(self, year, col, filename):
-        """
-        Save farm yields as a heatmap on an interactive topographic map
-        ---------------------------------------------------------------
-        Input parameters:
-        :param year: year for which yields are plotted
-        :param col: either 'yield_ha' or 'yield_parcel'
-        :param filename: a filename to save the HTML map file
-        """
-        if self.yields is None:
-            print("No yields data available. Please run the simulation first.")
-            return
-        else:
-            yield_df = self._get_yield_data(self.yields, year, col)
-            m = folium.Map(location=[self.lat, self.lon])
-            for _, r in yield_df.iterrows():
-                sim_geo = gpd.GeoSeries(r["geometry"])
-                geo_j = sim_geo.to_json()
-                geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {"fillColor": "orange"})
+    # def run_crop(self, **kwargs):
+    #     """
+    #     Run Wofost on an instance of the class 'Farm'. This method allows 
+    #     to run individual crops (not rotations). The **kwargs is a list of
+    #     years for which the crop needs to be run. The rotation to be passed
+    #     is the crop of interested with its associated agromanagement, 
+    #     followed by fallow. 
+    #     :param **kwargs: a list of years for which the model needs to be run
+    #     """
+    #     years = kwargs.get('years')
+    #     crop = kwargs.get('crop')
+    #     variety = kwargs.get('variety')
+    #     agromanagement_file = kwargs.get('agromanagement_file')
+    #     rcp = kwargs.get('rcp') or Farm.rcp
+    #     ensemble = kwargs.get('ensemble') or Farm.ensemble
+    #     soilsource = kwargs.get('soilsource') or Farm.soilsource
+    #     cropd = kwargs.get('cropd') or Farm.cropd
+    #     cropd.set_active_crop(crop, variety)
+    #     sitedata = kwargs.get('sitedata') or Farm.sitedata
+    #     output_dir = kwargs.get('output_dir') or Farm.output_dir
+    #     agromanagement_dir = kwargs.get('agromanagement_dir') or Farm.agromanagement_dir
+    #     agromanagement = SingleRotationAgroManager(agromanagement_dir + agromanagement_file)
+    #     years = self._check_input_year(years)
+    #     result_dict = {}
 
-                popup_content = f"<b>{r['parcel']}</b><br>"
-                popup_content += f"{col}: {r[col]}<br>"
-                folium.Popup(popup_content).add_to(geo_j)
-                geo_j.add_to(m)
-            savefile = self._check_html_extension(filename)
-            m.save(savefile)
+    #     for x, row in self.parcel_data.iterrows():
+    #         parcel_id = row['nat_grid_ref']
+    #         geometry = row['geometry']
+    #         area = self.parcel_data.iloc[[x]].to_crs(27700).area[x] / 10000
+    #         result_dict[parcel_id] = {
+    #             'geometry': geometry,
+    #             'area': area,
+    #             'yield_ha': {},
+    #             'yield_parcel':{},
+    #             'harvest_date': {}
+    #         }
+    #         for parcel_id in self.parcel_ids:
+    #             if soilsource == 'SoilGrids':
+    #                 soildata = SoilGridsDataProvider(parcel_id)
+    #             else:
+    #                 soildata = WHSDDataProvider(parcel_id)
+    #             try:
+    #                 wdp = NetCDFWeatherDataProvider(parcel_id, rcp, ensemble, force_update=False)
+    #             except:
+    #                 print(f'failed to retrieve weather data for parcel at \'{parcel_id}\'')
+    #             parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
+    #             if agromanagement.retrieve_variety != variety:
+    #                 agromanagement.change_variety(variety)
+                
+    #             for year in years:
+    #                 agromanagement.change_year(year)
+    #                 wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+    #                 try:
+    #                     wofsim.run_till_terminate()
+    #                 except:
+    #                     print(f'failed to run the WOFOST crop yield model for parcel \'{parcel_id}\'')
+    #                 output = wofsim.get_output()
+
+    #                 df = pd.DataFrame(output)
+    #                 df.set_index('day', inplace=True, drop=True)
+
+    #                 result_dict[parcel_id]['yield_ha'][year] = round(df['TWSO'].max() / 1e3, 3) * 1.14
+    #                 result_dict[parcel_id]['yield_parcel'][year] = round((df['TWSO'].max() / 1e3) * 1.14 * result_dict[parcel_id]['area'], 3)
+    #                 result_dict[parcel_id]['harvest_date'][year] = df['TWSO'].idxmax().strftime('%Y-%m-%d')
+    #     self.yields = result_dict
+    #     return self.yields
+
+
+
+
+    # def plot(self):
+    #     """
+    #     Basic plotting functionality for class Farm
+    #     """
+    #     df = self.parcel_data.to_crs("EPSG:3857")
+    #     ax = df.plot(edgecolor="red",
+    #                  facecolor="none",  
+    #                  linewidth=2)
+    #     # Add OpenStreetMap basemap
+    #     ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
+    #     plt.title(f"Farm {self.farm_id}")
+    #     plt.show()
+
+
+    # def save_plot(self, filename):
+    #     """
+    #     Save html file containing interactive map with an overlay of the farm.
+    #     Output file extension is .html
+    #     """
+    #     df = self.parcel_data
+    #     m = folium.Map(location=[self.lat, self.lon])
+    #     for _, r in df.iterrows():
+    #         sim_geo = gpd.GeoSeries(r["geometry"])
+    #         geo_j = sim_geo.to_json()
+    #         geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {"fillColor": "orange"})
+    #         folium.Popup(r["nat_grid_ref"]).add_to(geo_j)
+    #         geo_j.add_to(m)
+    #     savefile = self._check_html_extension(filename)
+    #     m.save(savefile)
+
+    
+    # def plot_yields(self, year, col, filename=None):
+    #     """
+    #     Plot farm yields as a heatmap on a topographic basemap.
+    #     -------------------------------------------------------
+    #     Input parameters:
+    #     :param year: year for which yields are plotted
+    #     :col value: either 'yield_ha' or 'yield_parcel'
+    #     """
+    #     if self.yields is None:
+    #         print("No yields data available. Please run the simulation first.")
+    #         return
+    #     else:
+    #         yield_df = self._get_yield_data(self.yields, year, col)
+    #         yield_df = yield_df.set_crs(4326)
+    #         df = yield_df.to_crs("EPSG:3857")
+    #         fig, ax = plt.subplots(figsize=(10, 10))
+    #         cmap = cm.get_cmap('hot').reversed()
+    #         df.plot(ax=ax, column=col, cmap=cmap, linewidth=0.8, edgecolor='black', legend=True)
+    #         ctx.add_basemap(ax, crs=df.crs.to_string(), source=ctx.providers.OpenStreetMap.BZH)
+    #         plt.title(f"Wheat yields for farm {self.farm_id} - [t/ha]")
+    #         if filename:
+    #             filename  = self._check_tiff_extension(filename)
+    #             plt.savefig(filename, dpi=300, bbox_inches='tight')
+    #         else:
+    #             plt.show()
+    
+
+    # def save_yield_map(self, year, col, filename):
+    #     """
+    #     Save farm yields as a heatmap on an interactive topographic map
+    #     ---------------------------------------------------------------
+    #     Input parameters:
+    #     :param year: year for which yields are plotted
+    #     :param col: either 'yield_ha' or 'yield_parcel'
+    #     :param filename: a filename to save the HTML map file
+    #     """
+    #     if self.yields is None:
+    #         print("No yields data available. Please run the simulation first.")
+    #         return
+    #     else:
+    #         yield_df = self._get_yield_data(self.yields, year, col)
+    #         m = folium.Map(location=[self.lat, self.lon])
+    #         for _, r in yield_df.iterrows():
+    #             sim_geo = gpd.GeoSeries(r["geometry"])
+    #             geo_j = sim_geo.to_json()
+    #             geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {"fillColor": "orange"})
+
+    #             popup_content = f"<b>{r['parcel']}</b><br>"
+    #             popup_content += f"{col}: {r[col]}<br>"
+    #             folium.Popup(popup_content).add_to(geo_j)
+    #             geo_j.add_to(m)
+    #         savefile = self._check_html_extension(filename)
+    #         m.save(savefile)
 
 
     @staticmethod
