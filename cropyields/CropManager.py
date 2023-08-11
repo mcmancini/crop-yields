@@ -420,6 +420,12 @@ class CropRotation:
     """
     Class generating crop rotations combining agromanagement
     from a succession of crops and/or grasses
+    --------------------------------------------------------
+    The required parameters are as follows:
+    : param crop: a succession of instances of the class 
+            'Crop' with associated agromanagemnets and
+            timings. Rotations do not have a limit in the 
+            number of crops that they can contain.
     """
 
     def __init__(self, *crops):
