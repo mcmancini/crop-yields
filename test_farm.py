@@ -45,18 +45,18 @@ fallow_args = {
 }
 fallow = Crop(2024, 'fallow', **fallow_args)
 
-ryegrass_args['variety'] = 'Northern_RyeGrass'
-npk_4 = {
-    'month': 6,
-    'day': 30,
-    'N_amount': 70, 
-    'P_amount': 35,
-    'K_amount': 105
-}
-ryegrass_args['apply_npk'] = [npk_4]
-# del ryegrass_args['mowing']
-ryegrass = Crop(2024, 'rye_grass', **ryegrass_args)
-ryegrass_rotation = CropRotation(ryegrass, fallow)
+# ryegrass_args['variety'] = 'Northern_RyeGrass'
+# npk_4 = {
+#     'month': 6,
+#     'day': 30,
+#     'N_amount': 70, 
+#     'P_amount': 35,
+#     'K_amount': 105
+# }
+# ryegrass_args['apply_npk'] = [npk_4]
+# # del ryegrass_args['mowing']
+# ryegrass = Crop(2024, 'rye_grass', **ryegrass_args)
+# ryegrass_rotation = CropRotation(ryegrass, fallow)
 
 rotation_1 = CropRotation(potatoes, wheat, fallow, maize)
 # rotation_2 = CropRotation(potatoes, fallow)
@@ -73,39 +73,39 @@ end_time = time.time()
 end_time - start_time
 
 
-save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
-year = 2020
-col = 'yield_parcel'
-a.save_yield_map(year, col, f"{save_folder}\\{a.farm_id}_{year}.html")
-a.plot_yields(2020, 'yield_ha', f"{save_folder}\\{a.farm_id}_{year}.tiff")
+# save_folder = 'D:\Documents\Data\PCSE-WOFOST\WOFOST_output\Figures'
+# year = 2020
+# col = 'yield_parcel'
+# a.save_yield_map(year, col, f"{save_folder}\\{a.farm_id}_{year}.html")
+# a.plot_yields(2020, 'yield_ha', f"{save_folder}\\{a.farm_id}_{year}.tiff")
 
 
-from cropyields.CropManager import Crop, CropRotation
-import datetime as dt
-events = {}
-events['date'] = dt.date(2024, 2, 15)
-events['N_amount'] = 60
-events['P_amount'] = 15
-events['K_amount'] = 5
-args = {}
-args['apply_npk'] = {}
-args['apply_npk'] = [events, events]
-args['crop_start_date'] = dt.date(2023, 11, 10)
+# from cropyields.CropManager import Crop, CropRotation
+# import datetime as dt
+# events = {}
+# events['date'] = dt.date(2024, 2, 15)
+# events['N_amount'] = 60
+# events['P_amount'] = 15
+# events['K_amount'] = 5
+# args = {}
+# args['apply_npk'] = {}
+# args['apply_npk'] = [events, events]
+# args['crop_start_date'] = dt.date(2023, 11, 10)
 
-a = Crop('maize', 'maize_01', 2023)
-print(a.agromanagement)
-b = Crop('wheat', 'winter_wheat_01', 2023, **args)
-print(b.agromanagement)
+# a = Crop('maize', 'maize_01', 2023)
+# print(a.agromanagement)
+# b = Crop('wheat', 'winter_wheat_01', 2023, **args)
+# print(b.agromanagement)
 
-crop1 = Crop("wheat", "Winter_wheat_106", 2023, **args)
-crop2 = Crop("corn", "Yellow_corn_205", 2025)
-print(crop1.agromanagement)
-print(crop2.agromanagement)
+# crop1 = Crop("wheat", "Winter_wheat_106", 2023, **args)
+# crop2 = Crop("corn", "Yellow_corn_205", 2025)
+# print(crop1.agromanagement)
+# print(crop2.agromanagement)
 
-rotation = CropRotation(crop1, crop2)
-print(rotation.rotation)
+# rotation = CropRotation(crop1, crop2)
+# print(rotation.rotation)
 
 
-from pcse.fileinput import YAMLCropDataProvider
-p = YAMLCropDataProvider()
-print(p)
+# from pcse.fileinput import YAMLCropDataProvider
+# p = YAMLCropDataProvider()
+# print(p)
