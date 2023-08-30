@@ -10,7 +10,7 @@ from cropyields.CropManager import SingleRotationAgroManager
 from cropyields.SoilManager import SoilGridsDataProvider, WHSDDataProvider
 from cropyields.WeatherManager import NetCDFWeatherDataProvider
 from pcse.base import ParameterProvider
-from pcse.models import Wofost71_WLP_FD
+from pcse.models import Wofost72_WLP_FD
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -105,7 +105,7 @@ class Farm:
                 crop_start_date = rotation.find_value('crop_start_date')
                 cropd.set_active_crop(crop_name, crop_variety)
                 parameters = ParameterProvider(cropdata=cropd, soildata=soildata, sitedata=sitedata)
-                wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+                wofsim = Wofost72_WLP_FD(parameters, wdp, agromanagement)
                 try:
                     wofsim.run_till_terminate()
                 except:
