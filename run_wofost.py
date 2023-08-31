@@ -11,7 +11,7 @@ from pcse.util import WOFOST80SiteDataProvider
 from pcse.base import ParameterProvider
 from pcse.fileinput import YAMLAgroManagementReader
 from datetime import date
-from pcse.models import Wofost80_NWLP_FD_beta, Wofost71_WLP_FD
+from pcse.models import Wofost80_NWLP_FD_beta, Wofost80_PP_beta, Wofost72_WLP_FD, Wofost72_PP
 from cropyields.SoilManager import SoilGridsDataProvider
 
 # LOCATION
@@ -41,10 +41,10 @@ agromanagement = YAMLAgroManagementReader(agromanagement_file)
 rcp = 'rcp26'
 ensemble = 1
 wdp = NetCDFWeatherDataProvider(osgrid_code, rcp, ensemble, force_update=False)
-wdp_2 = NASAPowerWeatherDataProvider(latitude=50.309, longitude=-3.785)
-day = date(2022, 8, 31)
+# wdp_2 = NASAPowerWeatherDataProvider(latitude=50.309, longitude=-3.785)
+day = date(2016, 8, 31)
 print(wdp(day))
-print(wdp_2(day))
+# print(wdp_2(day))
 
 # df_1 = pd.DataFrame(wdp_1.export())
 # df_2 = pd.DataFrame(wdp_2.export())
@@ -56,7 +56,8 @@ print(wdp_2(day))
 
 # Define simulation engine
 # wofsim = Wofost80_NWLP_FD_beta(parameters, wdp, agromanagement)
-wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+wofsim = Wofost72_PP(parameters, wdp, agromanagement)
+# wofsim = Wofost72_WLP_FD(parameters, wdp, agromanagement)
 
 # Run the model
 wofsim.run_till_terminate()

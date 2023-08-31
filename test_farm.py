@@ -45,18 +45,18 @@ fallow_args = {
 }
 fallow = Crop(2024, 'fallow', **fallow_args)
 
-# ryegrass_args['variety'] = 'Northern_RyeGrass'
-# npk_4 = {
-#     'month': 6,
-#     'day': 30,
-#     'N_amount': 70, 
-#     'P_amount': 35,
-#     'K_amount': 105
-# }
-# ryegrass_args['apply_npk'] = [npk_4]
-# # del ryegrass_args['mowing']
-# ryegrass = Crop(2024, 'rye_grass', **ryegrass_args)
-# ryegrass_rotation = CropRotation(ryegrass, fallow)
+ryegrass_args['variety'] = 'Northern_RyeGrass'
+npk_4 = {
+    'month': 6,
+    'day': 30,
+    'N_amount': 70, 
+    'P_amount': 35,
+    'K_amount': 105
+}
+ryegrass_args['apply_npk'] = [npk_4]
+# del ryegrass_args['mowing']
+ryegrass = Crop(2024, 'rye_grass', **ryegrass_args)
+ryegrass_rotation = CropRotation(ryegrass, fallow)
 
 rotation_1 = CropRotation(potatoes, wheat, fallow, maize)
 # rotation_2 = CropRotation(potatoes, fallow)
