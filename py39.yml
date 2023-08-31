@@ -205,14 +205,14 @@ dependencies:
   - zlib=1.2.12=hcfcfb64_3
   - zstd=1.5.2=h7755175_4
   - pip:
-    - et-xmlfile==1.1.0
-    - importlib==1.0.4
-    - ipython-genutils==0.2.0
-    - nc-time-axis==1.4.1
-    - openpyxl==3.0.10
-    - pcse==5.5.3
-    - pip==23.0.1
-    - rosetta-soil==0.1.1
-    - soiltexture==1.0.4
-    - traitlets-pcse==5.0.0.dev0
+      - et-xmlfile==1.1.0
+      - importlib==1.0.4
+      - ipython-genutils==0.2.0
+      - nc-time-axis==1.4.1
+      - openpyxl==3.0.10
+      - pcse==5.5.3
+      - pip==23.0.1
+      - rosetta-soil==0.1.1
+      - soiltexture==1.0.4
+      - traitlets-pcse==5.0.0.dev0
 prefix: C:\Users\mcm216\Miniconda3\envs\py39
