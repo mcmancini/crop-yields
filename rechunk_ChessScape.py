@@ -52,7 +52,7 @@ def rechunk_ChessScape(OsCell):
         os.mkdir(out_path)
 
     # nc data parameters
-    rcp = 'rcp85'
+    rcp = 'rcp26'
     years = [x for x in range(2020, 2081)]
     vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind']
     # vars = ['tas', 'tasmax', 'tasmin', 'pr', 'rlds', 'rsds', 'hurs', 'sfcWind', 'psurf']

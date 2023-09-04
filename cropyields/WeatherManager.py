@@ -18,7 +18,7 @@ from pcse.db import NASAPowerWeatherDataProvider
 from pcse.settings import settings
 from cropyields import data_dirs
 from cropyields.utils import osgrid2lonlat, rh_to_vpress, sun, calc_doy, nearest, find_closest_point
-from cropyields.db_manager import get_parcel_data
+from cropyields.db_manager import get_parcel_data, get_dtm_values
 import logging
 
 # Conversion functions
@@ -79,12 +79,18 @@ class NetCDFWeatherDataProvider(WeatherDataProvider):
         self.longitude, self.latitude = osgrid2lonlat(self.osgrid_1km, EPSG=4326)
 
         # Retrieve altitude
-        self.elevation = get_parcel_data(osgrid_code, ['elevation'])['elevation']
-
+        # self.elevation = get_parcel_data(osgrid_code, ['elevation'])['elevation']
+        self.elevation = get_dtm_values(osgrid_code)['elevation']
+        
         # Retrieve Angstrom coefficients A and B
-        w = pd.read_csv(data_dirs['utils_dir'] + 'angst_coefficients.csv').set_index('parcel')
-        self.angstA, self.angstB = w.loc[osgrid_code]['angstA'], w.loc[osgrid_code]['angstB']
-        self.has_sunshine = False # data has radiation values, not sunshine hours
+        w = NASAPowerWeatherDataProvider(self.longitude, self.latitude)
+        angstA, angstB = w.angstA, w.angstB
+        self.angstA, self.angstB = check_angstromAB(angstA, angstB)
+
+        # # Retrieve Angstrom coefficients A and B
+        # w = pd.read_csv(data_dirs['utils_dir'] + 'angst_coefficients.csv').set_index('parcel')
+        # self.angstA, self.angstB = w.loc[osgrid_code]['angstA'], w.loc[osgrid_code]['angstB']
+        # self.has_sunshine = False # data has radiation values, not sunshine hours
 
         # Check for existence of a cache file
         cache_file = self._find_cache_file(self.cache_fname)
