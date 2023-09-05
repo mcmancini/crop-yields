@@ -11,6 +11,7 @@ from pcse.util import WOFOST80SiteDataProvider
 from pcse.base import ParameterProvider
 from pcse.models import Wofost80_NWLP_FD_beta, Wofost72_WLP_FD, Wofost72_PP, Wofost80_PP_beta
 from cropyields.utils import printProgressBar
+import datetime as dt
 
 class WofostSimulator:
     """
@@ -123,8 +124,13 @@ class WofostSimulator:
                 item['N_amount'] = n_variables[i]
                 item['P_amount'] = p_variables[i]
                 item['K_amount'] = k_variables[i]
+            
+            if isinstance(crop_start_date, dt.date):
+                crop_parameters[crop]['crop_start_date'] = crop_start_date
+            else:
+                int_date = int(crop_start_date)
+                crop_parameters[crop]['crop_start_date'] = dt.date.fromordinal(int_date)
 
-            crop_parameters[crop]['crop_start_date'] = crop_start_date
             crop_parameters[crop]['variety'] = variety
             wheat = Crop(year, 'wheat', **crop_parameters[crop])
             cropd.set_active_crop(wheat.crop, wheat.variety)

@@ -98,7 +98,7 @@ class InputSampler:
             parameter_dict = {}
             for j in range(len(parameter_names)):
                 if parameter_names[j] == "crop_start_date":
-                    parameter_dict[parameter_names[j]] = dt.date.fromordinal(int(sample_array[i][j]))
+                    parameter_dict[parameter_names[j]] = int(sample_array[i][j])
                 else:
                     parameter_dict[parameter_names[j]] = sample_array[i][j]
             parameter_dict.update(self._params)
