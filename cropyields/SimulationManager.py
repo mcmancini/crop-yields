@@ -6,6 +6,7 @@ from cropyields.CropManager import Crop, CropRotation
 from pcse.util import WOFOST80SiteDataProvider
 from pcse.base import ParameterProvider
 from pcse.models import Wofost80_NWLP_FD_beta, Wofost72_WLP_FD, Wofost72_PP, Wofost80_PP_beta
+from cropyields.utils import printProgressBar
 
 class WofostSimulator:
     """
@@ -85,8 +86,10 @@ class WofostSimulator:
         multiple imput parameter combinations defined in **args                            
         """
         output = {}
+        counter = 0
+        printProgressBar(0, len(args), prefix = 'Progress:', suffix = 'Complete', length = 100)
         for item in args:
-
+            counter += 1
             name = item.get('name')
             crop = item.get('crop')
             variety = item.get('variety')
@@ -145,8 +148,9 @@ class WofostSimulator:
                 'TWSO': summary_output[0]['TWSO']
             }
 
-            output[f'{name}_01'] = output_dict
-            return output
+            output[f'{name}_{counter}'] = output_dict
+            printProgressBar(counter, len(args), prefix = 'Progress:', suffix = 'Complete', length = 100)
+        return output
 
 
     def __str__(self):

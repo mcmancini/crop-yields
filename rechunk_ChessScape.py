@@ -103,15 +103,28 @@ def rechunk_ChessScape(OsCell):
 
 if __name__ == "__main__":
 
-    OsGrid = ["SX73", "SX78", "SX89", "SX60", "SX79", "SX51", 
-            "SX77", "SX75", "SX56", "SX83", "SX61", "SX70", 
-            "SX54", "SX72", "SX87", "SX67", "SX65", "SX71", 
-            "SX69", "SX81", "SX50", "SX85", "SX57", "SX84", 
-            "SX66", "SX59", "SX88", "SX80", "SX91", "SX74", 
-            "SX58", "SX55", "SX82", "SX76", "SX90", "SX68", 
-            "SX92", "SX53", "SX86", "SX63", "SX62", "SX52", 
-            "SX64", "SX49", "SX46", "SX94", "SX44", "SX95", 
-            "SX45"]
+    # OsGrid = ["SX73", "SX78", "SX89", "SX60", "SX79", "SX51", 
+    #         "SX77", "SX75", "SX56", "SX83", "SX61", "SX70", 
+    #         "SX54", "SX72", "SX87", "SX67", "SX65", "SX71", 
+    #         "SX69", "SX81", "SX50", "SX85", "SX57", "SX84", 
+    #         "SX66", "SX59", "SX88", "SX80", "SX91", "SX74", 
+    #         "SX58", "SX55", "SX82", "SX76", "SX90", "SX68", 
+    #         "SX92", "SX53", "SX86", "SX63", "SX62", "SX52", 
+    #         "SX64", "SX49", "SX46", "SX94", "SX44", "SX95", 
+    #         "SX45"]
+    OsRegions = [
+        'SV', 'SW', 'SX', 'SY', 'SZ', 'TV',
+        'SR', 'SS', 'ST', 'SU', 'TQ', 'TR',
+        'SM', 'SN', 'SO', 'SP', 'TL', 'TM',
+        'SH', 'SJ', 'SK', 'TF', 'TG', 'SC',
+        'SD', 'SE', 'TA', 'NW', 'NX', 'NY',
+        'NZ', 'OV', 'NR', 'NS', 'NT', 'NU',
+        'NL', 'NM', 'NN', 'NO', 'NP', 'NF',
+        'NG', 'NH', 'NJ', 'NK', 'NA', 'NB',
+        'NC', 'ND', 'NE', 'HW', 'HX', 'HY',
+        'HZ', 'HT', 'HU', 'HO', 'HP'
+    ]
+
     
     pool = multiprocessing.Pool(processes=16)
 

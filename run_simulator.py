@@ -14,7 +14,8 @@ This script allows the following:
       collecting the output.
 """
 from cropyields.SimulationManager import WofostSimulator
-import datetime as dt
+from cropyields.Sampler import InputSampler
+import pandas as pd
 
 # Location
 lat, lon = 50.238797, -3.700497
@@ -26,26 +27,22 @@ sim = WofostSimulator(lon, lat)
 # PARAMETER RANGE DEFINITION. This is where we can set a sampling desing. 
 # The code is set up for each sample to be a list of dictionaries. Each 
 # will have a name to be able to map the sample to the input parameter set.
-params = [{
+params = {
     'name': 'test_sample',
     'crop': 'wheat',
     'variety': 'Winter_wheat_106',
-    'year': year,
-    'WAV': 100,      # Initial amount of water in total soil profile [cm]
-    'NAVAILI': 80,   # Amount of N available in the pool at initialization of the system [kg/ha]
-    'PAVAILI': 10,   # Amount of P available in the pool at initialization of the system [kg/ha]
-    'KAVAILI': 20,   # Amount of K available in the pool at initialization of the system [kg/ha]
-    'crop_start_date': dt.date(year, 11, 20),
-    'N_FIRST': 60,   # Amount of N applied in first, second and third fertilisation event [kg/ha]. Max: 250 in total
-    'N_SECOND': 100, 
-    'N_THIRD': 50, 
-    'P_FIRST': 3,    # Amount of P applied in first, second and third fertilisation event [kg/ha]. Max: 60
-    'P_SECOND': 13, 
-    'P_THIRD': 23,  
-    'K_FIRST': 4,    # Amount of K applied in first, second and third fertilisation event [kg/ha]. Max: 150
-    'K_SECOND': 14, 
-    'K_THIRD': 24    
-}]
+    'year': year
+  }
+
+lhs_sampler = InputSampler(params)
+parameter_samples = lhs_sampler.lhs(10)
+
 
 # Run the simulator
-sim.run(params)
+a = sim.run(parameter_samples)
+input_df = pd.DataFrame(parameter_samples)
+output_df = pd.DataFrame(a)
+output_df = output_df.T.reset_index(drop=True)
+df = pd.concat([input_df, output_df], ignore_index=True, axis=1)
+df.columns = list(input_df.columns) + list(output_df.columns)
+df.to_csv('test.csv')
