@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 LEEP, University of Exeter (UK)
+# Mattia Mancini (m.c.mancini@exeter.ac.uk), September 2023
+# =========================================================
 from cropyields.WeatherManager import NetCDFWeatherDataProvider
 from cropyields.utils import lonlat2osgrid
 from cropyields.SoilManager import SoilGridsDataProvider
