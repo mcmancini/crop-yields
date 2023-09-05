@@ -5,8 +5,8 @@
 """
 run_simulator.py
 ================
-This script allows to run a wofost simulator based on a series of 
-varying input parameters, and stores the output into a dataframe.
+This script allows to 1) run a wofost simulator based on a series of 
+varying input parameters, and to 2) store the output into a dataframe.
 The purpose of this is to generate enough Wofost crop yield model
 runs to build and train a wofost emulator.
 
@@ -40,12 +40,11 @@ import pandas as pd
 lat, lon = 50.238797, -3.700497
 year = 2020
 
+# instantiate the simulator
 sim = WofostSimulator(lon, lat)
 
 
-# PARAMETER RANGE DEFINITION. This is where we can set a sampling desing. 
-# The code is set up for each sample to be a list of dictionaries. Each 
-# will have a name to be able to map the sample to the input parameter set.
+# Parameters common to all simulation runs 
 params = {
     'name': 'test_sample',
     'crop': 'wheat',
@@ -53,15 +52,21 @@ params = {
     'year': year
   }
 
+# Instantiate the sampler
 lhs_sampler = InputSampler(params)
+
+# run the sampler
 parameter_samples = lhs_sampler.lhs(10)
 
-
-# Run the simulator
+# Run the simulator with the samples generated from the sampler
 a = sim.run(parameter_samples)
+
+# Prepare output
 input_df = pd.DataFrame(parameter_samples)
 output_df = pd.DataFrame(a)
 output_df = output_df.T.reset_index(drop=True)
 df = pd.concat([input_df, output_df], ignore_index=True, axis=1)
 df.columns = list(input_df.columns) + list(output_df.columns)
+
+# Save output as .csv
 df.to_csv('test.csv', index=False)
