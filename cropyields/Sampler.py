@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 LEEP, University of Exeter (UK)
+# Mattia Mancini (m.c.mancini@exeter.ac.uk), September 2023
+# =========================================================
 import datetime as dt
 import numpy as np
 from pyDOE2 import lhs
 
-
 class InputSampler:
     """
     Class InputSampler:
-    class generating a sampling design based on a set if input parameters
+    class generating a sampling design based on a set of input parameters
     to pass to a Simulator object (see SimulationManager.WofostSimulator).
     This allows to run Wofost iteratively on cominations of input parameters
     ------------------------------------------------------------------------
@@ -19,6 +22,9 @@ class InputSampler:
         'year': the year for which the simulator needs to be run
     
     Methods defined here:
+
+    __str__(self, /)
+        Return str(self).
 
     lhs(self, num_each):
         creates a latin hypercube sampling design where 'num_each'
@@ -99,18 +105,18 @@ class InputSampler:
             output_sample.append(parameter_dict)
         return output_sample
     
+    def __str__(self):
+        msg = "======================================================\n"
+        msg += "             Sampler characteristics\n"
+        msg += "---------------------Description----------------------\n"
+        msg += "Sampler for crop \'" + self._params['crop'] + "\'\n"
+        msg += "Variety: \'" + self._params['variety'] + "\'\n"
+        msg += "Year: \'" + str(self._params['year']) + "\'\n"
+        msg += "------------------------------------------------------\n"
+        msg += "Output name: \'" + self._params['name'] + "\'\n"
+        return msg
 
 
-
-
-        # for i, parameter_name in enumerate(parameter_names):
-        #     if parameter_name == "crop_start_date":
-        #         parameter_dict[parameter_name] = dt.date.fromordinal(int(sample_array[i]))
-        #     else:
-        #         parameter_dict[parameter_name] = sample_array[i]
-        #     parameter_dict.update(self._params)
-        #     output_sample.append(parameter_dict)
-        # return output_sample
 
 
     
