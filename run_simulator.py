@@ -5,13 +5,32 @@
 """
 run_simulator.py
 ================
-This script allows the following:
+This script allows to run a wofost simulator based on a series of 
+varying input parameters, and stores the output into a dataframe.
+The purpose of this is to generate enough Wofost crop yield model
+runs to build and train a wofost emulator.
+
+In detail, the script allows to:
     - Create an instance of the Wofost Simulator for a selected
       location in GB. 
     - Define an input parameter space as a list of parameter
       dictionaries. This list is then passed to the simulator
     - Run the simulator on the defined input parameter space
       collecting the output.
+
+How it works:
+There are two main components to this script: a Simulator and
+a Sampler.
+The Simulator (WofostSimulator) allows to initialise an instance
+of the simulator which is location specific: at initialisation, 
+the weather and soil data are pre-loaded.
+Once the simulator is active, we initialise a Sampler (InputSampler)
+which defines first some common parameters of all the simulation runs
+to be passed to the simulator. Once these are defined, we need to 
+define a sampling strategy. The sampler method 'lhs' performs latin 
+hypercbue sampling on a defined set of Wofost input parameters with 
+associated ranges (more details in InputSampler in cropyield.Sampler.py).
+Once the sampling is done, the simulator can be run with the 'run' method.
 """
 from cropyields.SimulationManager import WofostSimulator
 from cropyields.Sampler import InputSampler
