@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import re
 
-def download_ChessScape_data(rcps, vars, ensembles, bias_corrected):
+def download_ChessScape_data(rcps, climate_vars, ensembles, bias_corrected):
     '''
     FTP download of ChessScape data, which is then
     saved into a specified directory
@@ -33,7 +33,7 @@ def download_ChessScape_data(rcps, vars, ensembles, bias_corrected):
         for ensemble in ensembles:
 
             # loop through weather variables
-            for var in vars:
+            for var in climate_vars:
 
                 # loop through years
                 for year in range(2020,2081):
@@ -59,19 +59,17 @@ def download_ChessScape_data(rcps, vars, ensembles, bias_corrected):
     # Close FTP connection
     f.close()
 
-# List all ChessScape files within path for the selected rcp, years, vars and ensembles
-def filter_files(rcp, years, vars, ensembles):
+# List all ChessScape files within path for the selected rcp, years, climate_vars and ensembles
+def filter_files(rcp, years, climate_vars, ensembles, path):
     '''
-    Identifies all files in ceda download dir. containing years and vars for the 
-    specified ensemble and rcp. Years and vars can be one or more. In
+    Identifies all files in ceda download dir. containing years and climate_vars for the 
+    specified ensemble and rcp. Years and climate_vars can be one or more. In
     both cases, they must be passed as lists
     '''
-    path = data_dirs['ceda_dir']
-    
     if not isinstance(years, list):
         years = [years]
-    if not isinstance(vars, list):
-        vars = [vars]
+    if not isinstance(climate_vars, list):
+        climate_vars = [climate_vars]
     if not isinstance(ensembles, list):
         ensembles = [ensembles]
     allfiles = [f for f in listdir(path) if isfile(join(path, f))]
@@ -79,7 +77,7 @@ def filter_files(rcp, years, vars, ensembles):
     
     filter_list = [False for x in range(len(df))]
     for year in years:
-        for var in vars:
+        for var in climate_vars:
             for ensemble in ensembles:
                 for i in range(len(df)):
                     yr = int(df[i][10][0:4])
