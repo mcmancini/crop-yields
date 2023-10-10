@@ -206,7 +206,6 @@ def populate_table(table_name, records):
     N.B.: if the table already contains data, use the 
     \'add_to_table\' function.
     """
-    
     db_name = db_parameters['db_name']
     db_user = db_parameters['db_user']
     db_password = db_parameters['db_password']
@@ -433,7 +432,7 @@ def get_farm_data(identifier):
     else:
         farm = identifier
 
-    engine = None    
+    engine = None
     try:
         database_url = f"postgresql://{db_parameters['db_user']}:{db_parameters['db_password']}@localhost/{db_parameters['db_name']}"
         engine = create_engine(database_url)
@@ -443,7 +442,7 @@ def get_farm_data(identifier):
             WHERE farm_id = {farm};
         """.format(farm=farm)
         df = pd.read_sql(sql, engine)
-    
+
         # Convert the WKT representation to a geospatial object
         df['geometry'] = gpd.GeoSeries.from_wkt(df['geometry'])
         df = gpd.GeoDataFrame(df, geometry='geometry')

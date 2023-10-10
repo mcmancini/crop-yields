@@ -5,7 +5,7 @@ from cropyields import db_parameters
 import psycopg2
 from cropyields.SoilManager import SoilGridsDataProvider, WHSDDataProvider
 from cropyields.WeatherManager import NetCDFWeatherDataProvider
-from cropyields.CropManager import SingleRotationAgroManager
+from cropyields.crop_manager import SingleRotationAgroManager
 from pcse.base import ParameterProvider
 from pcse.models import Wofost71_WLP_FD
 import pandas as pd

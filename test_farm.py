@@ -1,11 +1,18 @@
-from cropyields.FarmManager import Farm
-import psycopg2
-from cropyields import db_parameters
-import time 
-from cropyields.config import wheat_args, maize_args, potato_args, ryegrass_args
-from cropyields.CropManager import Crop, CropRotation
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 LEEP, University of Exeter (UK)
+# Mattia Mancini (m.c.mancini@exeter.ac.uk), June 2023
+# ====================================================
+"""
+Test script to experiment with farms, crops and rotations
+"""
 import datetime as dt
-  
+import time
+import psycopg2
+from cropyields.farm_manager import Farm
+from cropyields import db_parameters
+from cropyields.config import crop_parameters
+from cropyields.crop_manager import Crop, CropRotation
+
 # List of parcel codes
 conn = psycopg2.connect(user=db_parameters['db_user'],
                         password=db_parameters['db_password'], 
@@ -31,12 +38,15 @@ print(a)
 parcels = a.parcel_ids
 
 # Rotation 1
+potato_args = crop_parameters['potato']
 potato_args['variety'] = 'Potato_701'
 potatoes = Crop(2023, 'potato', **potato_args)
 
+wheat_args = crop_parameters['wheat']
 wheat_args['variety'] = 'Winter_wheat_106'
 wheat = Crop(2023, 'wheat', **wheat_args)
 
+maize_args = crop_parameters['maize']
 maize_args['variety'] = 'Grain_maize_201'
 maize = Crop(2025, 'maize', **maize_args)
 
@@ -45,6 +55,7 @@ fallow_args = {
 }
 fallow = Crop(2024, 'fallow', **fallow_args)
 
+ryegrass_args = crop_parameters['ryegrass']
 ryegrass_args['variety'] = 'Northern_RyeGrass'
 npk_4 = {
     'month': 6,

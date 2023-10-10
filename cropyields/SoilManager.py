@@ -1,11 +1,19 @@
-from cropyields import data_dirs
-from cropyields.utils import osgrid2lonlat, water_retention, water_conductivity, nearest
-from cropyields.db_manager import get_whsd_data
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 LEEP, University of Exeter (UK)
+# Mattia Mancini (m.c.mancini@exeter.ac.uk), June 2023
+# ====================================================
+"""
+SOIL MANAGER
+"""
+
+from math import log10
+import numpy as np
 import xarray as xr
 from rosetta import rosetta, SoilData
 from soiltexture import getTexture
-import numpy as np
-from math import log10
+from cropyields import data_dirs
+from cropyields.utils import osgrid2lonlat, water_retention, water_conductivity, nearest
+from cropyields.db_manager import get_whsd_data
 
 class SoilDataProvider(dict):
     """
@@ -15,7 +23,7 @@ class SoilDataProvider(dict):
     _DEFAULT_SOILVARS   = ["sand", "silt", "clay"]
     _WILTING_POTENTIAL  = log10(1.5e4)
     _FIELD_CAPACITY     = log10(150)
-    
+
     _defaults = {
         'CRAIRC' : 0.060,
         'SOPE' : 1.47,
@@ -31,7 +39,7 @@ class SoilDataProvider(dict):
     def __init__(self, osgrid_code):
         dict.__init__(self)
         self.update(self._defaults)
-    
+
     def _return_soildata(self, osgrid_code, soil_texture_list):
         lon, lat = osgrid2lonlat(osgrid_code, EPSG=4326)
         rosettasoil = SoilData.from_array([soil_texture_list])
@@ -75,7 +83,7 @@ class SoilDataProvider(dict):
         msg += "============================================\n\n"
         for key, value in self.items():
             if isinstance(value, list):
-                rounded_list = [round(x, 2) for x in value[0:20]]  # only print first 20 elements of list
+                rounded_list = [round(x, 2) for x in value[0:20]]
                 msg += "%s: %s %s\n" % (key, rounded_list, type(value))
             else:
                 msg += "%s: %s %s\n" % (key, value, type(value))
@@ -96,12 +104,12 @@ class SoilGridsDataProvider(SoilDataProvider):
     # class attributes
     _SOIL_PATH   = data_dirs["soils_dir"] + "GB_soil_data.nc"
     _DATA_SOURCE = "SoilGrids\nhttps://www.isric.org/explore/soilgrids"
-    
+
     def __init__(self, osgrid_code):
         super().__init__(osgrid_code)
         soil_texture_list = self._load_soil_data(osgrid_code)
         self.update(self._return_soildata(osgrid_code, soil_texture_list))
-    
+
     def _load_soil_data(self, osgrid_code):
         lon, lat = osgrid2lonlat(osgrid_code, EPSG=4326)
         soil_array = xr.open_dataset(SoilGridsDataProvider._SOIL_PATH)
@@ -109,7 +117,7 @@ class SoilGridsDataProvider(SoilDataProvider):
         # rosetta requires [%sand, %silt, %clay, bulk density, th33, th1500] in this order. Last 3 optional
         soil_df = soil_df.iloc[0].tolist()
         return soil_df
-    
+
 class WHSDDataProvider(SoilDataProvider):
     """
     Read soil data from the WHSD. This data is currently stored after
@@ -122,13 +130,13 @@ class WHSDDataProvider(SoilDataProvider):
     """
 
     # class attributes
-    _DATA_SOURCE = "WHSD: https://shorturl.at/yRT37"
-    
+    _DATA_SOURCE = "WHSD: https://tinyurl.com/y3b83h53"
+
     def __init__(self, osgrid_code):
         super().__init__(osgrid_code)
         soil_texture_list = self._load_soil_data(osgrid_code)
         self.update(self._return_soildata(osgrid_code, soil_texture_list))
-    
+
     def _load_soil_data(self, osgrid_code):
         soil_dict = get_whsd_data(osgrid_code, self._DEFAULT_SOILVARS)
         return [soil_dict[x] for x in soil_dict.keys()]

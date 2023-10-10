@@ -48,7 +48,6 @@ class Farm:
             self.lon,
             self.lat,
         ) = self._get_farm_data(identifier)
-        self.yields = []
 
     def run_rotation(self, **kwargs):
         """
@@ -148,7 +147,8 @@ class Farm:
                             "yield_parcel": 0,
                             "harvest_date": "N/A",
                         }
-        self.yields.append(result_dict)
+        self.yields = result_dict
+        return self.yields
 
     @staticmethod
     def _check_html_extension(filename):
